@@ -1550,7 +1550,12 @@ const AdminMembers = ({onBack,members,setMembers,showToast}) => {
   const filtered=members.filter(m=>!search||(m.name+m.dept+(m.email||'')).includes(search));
   return(
     <div className="fade-in pb-24">
-      <Header title="組合員管理" onBack={onBack} right={<button onClick={openAdd} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
+      <Header title="組合員管理" onBack={onBack} right={
+        <div className="flex gap-1">
+          <button onClick={()=>{members.forEach(m=>saveData('union_members',members));showToast('クラウドに保存しました');}} className="bg-white/20 text-white text-xs px-2 py-1.5 rounded-full">☁️同期</button>
+          <button onClick={openAdd} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>
+        </div>
+      }/>
       <div className="px-4 pt-4">
         {showForm&&(
           <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
@@ -2141,6 +2146,13 @@ const App = () => {
           const data=snap.data().d;
           localStorage.setItem(key,JSON.stringify(data));
           set(data);
+          // メンバーデータが来たら即座にユーザー情報を補正
+          if(key==='union_members'&&user){
+            const prof=data.find(m=>m.email===user.email);
+            if(prof&&(user.name!==prof.name||user.role!==prof.role||user.dept!==prof.dept)){
+              setUser(u=>({...u,name:prof.name,dept:prof.dept,role:prof.role}));
+            }
+          }
         }
       },()=>{})
     );
