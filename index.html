@@ -88,41 +88,11 @@ const CATEGORY_MAP={
   notice:{label:'お知らせ',color:'bg-gray-100 text-gray-600',dot:'bg-gray-400'},
 };
 const POST_TEMPLATES=[
-  {label:"賞与交渉結果",category:"important",title:"令和○年度 ○季賞与に関するお知らせ",body:"令和○年度の○季賞与について、組合と当局との交渉結果をお知らせします。
-
-今年度の○季賞与は、月例給の○○月分（前年比○月増減）で妥結いたしました。支給日は○月○日（○）の予定です。
-
-詳細については、添付の妥結内容をご確認ください。"},
-  {label:"定期大会案内",category:"activity",title:"令和○年度 定期大会のご案内（○月○日開催）",body:"令和○年度 定期大会を下記のとおり開催いたします。
-
-■ 日時：○年○月○日（○）○時〜○時
-■ 場所：○○
-■ 議題：活動報告・決算報告・次年度方針・役員改選
-
-全組合員のご参加をお願いいたします。"},
-  {label:"申請受付開始",category:"welfare",title:"○○申込受付開始（○月分）",body:"組合員を対象とした○○の申込受付を開始します。
-
-■ 対象：○○
-■ 補助額：○○
-■ 申込期限：○月○日（○）
-■ 申込方法：○○
-
-ご不明な点は担当者までお問い合わせください。"},
-  {label:"イベント案内",category:"event",title:"○○参加者募集！",body:"今年度の○○を下記のとおり開催します。
-
-■ 内容：○○
-■ 日時：○年○月○日（○）○時〜
-■ 場所：○○
-■ 参加費：○○
-
-家族参加も大歓迎です！参加希望の方は○月○日までにお申し込みください。"},
-  {label:"緊急連絡",category:"important",title:"【緊急】○○についてのお知らせ",body:"組合員の皆様へ
-
-以下の件につきまして、緊急のご連絡をいたします。
-
-○○
-
-詳細については追ってご連絡します。ご不明な点は執行部までご連絡ください。"},
+  {label:"賞与交渉結果",category:"important",title:"令和○年度 ○季賞与に関するお知らせ",body:"令和○年度の○季賞与について、組合と当局との交渉結果をお知らせします。\n\n今年度の○季賞与は、月例給の○○月分（前年比○月増減）で妥結いたしました。支給日は○月○日（○）の予定です。\n\n詳細については、添付の妥結内容をご確認ください。"},
+  {label:"定期大会案内",category:"activity",title:"令和○年度 定期大会のご案内（○月○日開催）",body:"令和○年度 定期大会を下記のとおり開催いたします。\n\n■ 日時：○年○月○日（○）○時〜○時\n■ 場所：○○\n■ 議題：活動報告・決算報告・次年度方針・役員改選\n\n全組合員のご参加をお願いいたします。"},
+  {label:"申請受付開始",category:"welfare",title:"○○申込受付開始（○月分）",body:"組合員を対象とした○○の申込受付を開始します。\n\n■ 対象：○○\n■ 補助額：○○\n■ 申込期限：○月○日（○）\n■ 申込方法：○○\n\nご不明な点は担当者までお問い合わせください。"},
+  {label:"イベント案内",category:"event",title:"○○参加者募集！",body:"今年度の○○を下記のとおり開催します。\n\n■ 内容：○○\n■ 日時：○年○月○日（○）○時〜\n■ 場所：○○\n■ 参加費：○○\n\n家族参加も大歓迎です！参加希望の方は○月○日までにお申し込みください。"},
+  {label:"緊急連絡",category:"important",title:"【緊急】○○についてのお知らせ",body:"組合員の皆様へ\n\n以下の件につきまして、緊急のご連絡をいたします。\n\n○○\n\n詳細については追ってご連絡します。ご不明な点は執行部までご連絡ください。"},
 ];
 const SAMPLE_MEMBERS=[
   {id:1,name:"田中 一郎",dept:"総務課",role:"admin",joinDate:"2018-04-01",email:"tanaka@nishinoshima.lg.jp"},
@@ -132,26 +102,10 @@ const SAMPLE_MEMBERS=[
   {id:5,name:"中村 太郎",dept:"建設課",role:"member",joinDate:"2017-04-01",email:"nakamura@nishinoshima.lg.jp"},
 ];
 const SAMPLE_POSTS=[
-  {id:1,title:"【重要】令和6年度 夏季賞与に関するお知らせ",category:"important",body:"令和6年度の夏季賞与について、組合と当局との交渉結果をお知らせします。
-
-今年度の夏季賞与は、月例給の2.2月分（前年比0.1月増）で妥結いたしました。支給日は6月28日（金）の予定です。",isPinned:true,authorName:"執行委員長 田中",publishedAt:"2026-06-01",readCount:42,totalCount:58,isRead:false,attachments:[{name:"令和6年夏季賞与_妥結内容.pdf",size:"245KB",type:"pdf",url:""}]},
-  {id:2,title:"定期大会のご案内（6月20日開催）",category:"activity",body:"令和6年度 定期大会を下記のとおり開催いたします。
-
-■ 日時：2026年6月20日（土）14:00〜16:00
-■ 場所：西ノ島町民会館 大ホール
-■ 議題：活動報告・決算報告・次年度方針・役員改選",isPinned:false,authorName:"書記長 山本",publishedAt:"2026-05-28",readCount:31,totalCount:58,isRead:true,attachments:[]},
-  {id:3,title:"人間ドック申込受付開始（7月分）",category:"welfare",body:"組合員および家族を対象とした人間ドック（組合補助あり）の申込受付を開始します。
-
-■ 対象：組合員およびその配偶者
-■ 補助額：1人あたり8,000円
-■ 申込期限：6月30日（月）",isPinned:false,authorName:"厚生部長 佐藤",publishedAt:"2026-05-25",readCount:28,totalCount:58,isRead:false,attachments:[]},
-  {id:4,title:"夏のレクリエーション参加者募集！",category:"event",body:"今年度の夏レクリエーションを以下のとおり開催します。
-
-■ 内容：BBQ大会＆スポーツ大会
-■ 日時：2026年7月19日（土）10:00〜
-■ 場所：西ノ島浦郷港公園
-
-家族参加も大歓迎です！",isPinned:false,authorName:"厚生部 鈴木",publishedAt:"2026-05-20",readCount:45,totalCount:58,isRead:true,attachments:[]},
+  {id:1,title:"【重要】令和6年度 夏季賞与に関するお知らせ",category:"important",body:"令和6年度の夏季賞与について、組合と当局との交渉結果をお知らせします。\n\n今年度の夏季賞与は、月例給の2.2月分（前年比0.1月増）で妥結いたしました。支給日は6月28日（金）の予定です。",isPinned:true,authorName:"執行委員長 田中",publishedAt:"2026-06-01",readCount:42,totalCount:58,isRead:false,attachments:[{name:"令和6年夏季賞与_妥結内容.pdf",size:"245KB",type:"pdf",url:""}]},
+  {id:2,title:"定期大会のご案内（6月20日開催）",category:"activity",body:"令和6年度 定期大会を下記のとおり開催いたします。\n\n■ 日時：2026年6月20日（土）14:00〜16:00\n■ 場所：西ノ島町民会館 大ホール\n■ 議題：活動報告・決算報告・次年度方針・役員改選",isPinned:false,authorName:"書記長 山本",publishedAt:"2026-05-28",readCount:31,totalCount:58,isRead:true,attachments:[]},
+  {id:3,title:"人間ドック申込受付開始（7月分）",category:"welfare",body:"組合員および家族を対象とした人間ドック（組合補助あり）の申込受付を開始します。\n\n■ 対象：組合員およびその配偶者\n■ 補助額：1人あたり8,000円\n■ 申込期限：6月30日（月）",isPinned:false,authorName:"厚生部長 佐藤",publishedAt:"2026-05-25",readCount:28,totalCount:58,isRead:false,attachments:[]},
+  {id:4,title:"夏のレクリエーション参加者募集！",category:"event",body:"今年度の夏レクリエーションを以下のとおり開催します。\n\n■ 内容：BBQ大会＆スポーツ大会\n■ 日時：2026年7月19日（土）10:00〜\n■ 場所：西ノ島浦郷港公園\n\n家族参加も大歓迎です！",isPinned:false,authorName:"厚生部 鈴木",publishedAt:"2026-05-20",readCount:45,totalCount:58,isRead:true,attachments:[]},
 ];
 const SAMPLE_SURVEYS=[
   {id:1,title:"定期大会 出欠確認",description:"6月20日開催の定期大会への出欠をお知らせください。",endAt:"2026-06-15",status:"active",isAnswered:false,answerCount:38,totalCount:58,
