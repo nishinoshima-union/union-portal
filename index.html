@@ -1770,6 +1770,11 @@ const FirebaseSettings = ({onBack}) => {
           <p className="font-bold mt-2 mb-1">✅ 設定後は全デバイスで自動同期されます</p>
         </div>
         {saved2&&<div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-sm text-green-700 font-bold text-center">✓ 保存しました</div>}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+          <p className="text-xs font-bold text-blue-700 mb-1">① ローカルデータをFirestoreにアップロード（初回のみ）</p>
+          <p className="text-xs text-blue-600 mb-2">掲示板・組合員・アンケートなどのデータをクラウドに保存します。</p>
+          <UploadToFirestoreButton/>
+        </div>
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
           {[['apiKey','API Key'],['authDomain','Auth Domain (xxx.firebaseapp.com)'],['projectId','Project ID']].map(([k,l])=>(
             <div key={k} className="mb-3">
@@ -1781,11 +1786,6 @@ const FirebaseSettings = ({onBack}) => {
         </div>
         {hasCfg&&(
           <div>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
-              <p className="text-xs font-bold text-blue-700 mb-1">① ローカルデータをFirestoreにアップロード</p>
-              <p className="text-xs text-blue-600 mb-3">このデバイスのデータ（掲示板・組合員・アンケート等）をクラウドに保存します。初回のみ実行してください。</p>
-              <UploadToFirestoreButton/>
-            </div>
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
               <p className="text-xs font-bold text-green-700 mb-1">② 設定済みHTMLをダウンロードして配布</p>
               <p className="text-xs text-green-600 mb-3">Firebase設定を埋め込んだHTMLをダウンロードし、GitHub Pagesに上書きアップロードしてください。以降は全デバイスで設定不要になります。</p>
