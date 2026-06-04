@@ -1505,6 +1505,7 @@ const App = () => {
   const [officers,setOfficers]=useState(()=>loadData('union_officers',SAMPLE_OFFICERS));
   const [activities,setActivities]=useState(()=>loadData('union_activities',SAMPLE_ACTIVITIES));
   const [toast,setToast]=useState(null);
+  const [adminSetupPrompt,setAdminSetupPrompt]=useState(false);
 
   useEffect(()=>saveData('union_posts',posts),[posts]);
   useEffect(()=>saveData('union_surveys',surveys),[surveys]);
@@ -1558,7 +1559,14 @@ const App = () => {
 
   const unreads={board:posts.filter(p=>!p.isRead).length,survey:surveys.filter(s=>s.status==='active'&&!s.isAnswered).length};
 
-  if(!user)return <LoginScreen onLogin={setUser}/>;
+  const handleUserLogin = (u) => {
+    setUser(u);
+    // 管理者が誰もいない場合にプロンプト表示
+    const mems = loadData('union_members', SAMPLE_MEMBERS);
+    const hasAdmin = mems.some(m => m.role === 'admin');
+    if (!hasAdmin) setAdminSetupPrompt(true);
+  };
+  if(!user)return <LoginScreen onLogin={handleUserLogin}/>;
 
   const renderContent=()=>{
     if(subScreen==='notif')return <NotificationSettings onBack={clearSub}/>;
@@ -1594,6 +1602,34 @@ const App = () => {
     <div className="max-w-[480px] mx-auto min-h-screen bg-gray-50">
       {renderContent()}
       {showNav&&<BottomNav active={tab} onChange={t=>{setTab(t);setBoardView('list');setSurveyView('list');setConsultView('top');}} unreads={unreads}/>}
+      {adminSetupPrompt&&(
+        <div className="modal-overlay" style={{zIndex:100}}>
+          <div className="modal-box">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"><Icon name="user" size={28} color="#1d4ed8"/></div>
+              <h2 className="font-bold text-gray-900 text-base">管理者が設定されていません</h2>
+              <p className="text-sm text-gray-500 mt-1">このアカウントを管理者に設定しますか？</p>
+              <p className="text-xs text-gray-400 mt-1">（ログイン中: {user.email||user.name}）</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={()=>setAdminSetupPrompt(false)} className="flex-1 border border-gray-200 rounded-xl py-3 text-sm text-gray-600">あとで</button>
+              <button onClick={()=>{
+                const mems=loadData('union_members',SAMPLE_MEMBERS);
+                const email=user.email||'';
+                const updated=mems.map(m=>m.email===email?{...m,role:'admin'}:m);
+                // メンバーリストに存在しなければ追加
+                const exists=mems.some(m=>m.email===email);
+                const final=exists?updated:[...updated,{id:Date.now(),name:user.name,dept:user.dept||'',email,role:'admin',joinDate:new Date().toISOString().slice(0,10)}];
+                saveData('union_members',final);
+                setUser(u=>({...u,role:'admin'}));
+                setMembers(final);
+                setAdminSetupPrompt(false);
+                showToast('管理者に設定しました');
+              }} className="flex-1 bg-blue-700 text-white rounded-xl py-3 text-sm font-bold">管理者に設定する</button>
+            </div>
+          </div>
+        </div>
+      )}
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
     </div>
   );
