@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
 * { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:10px;font-size:11px;font-weight:700;padding:0 5px}
@@ -45,6 +46,36 @@ function initFb(){
   if(typeof firebase==='undefined')throw new Error('Firebase SDK not loaded');
   if(!firebase.apps.length)firebase.initializeApp(cfg);
   return firebase.auth();
+}
+
+// ─── FIREBASE STORAGE ────────────────────────────────────────────────────────
+function getStorage(){
+  const cfg=getFbConfig();
+  if(!cfg||typeof firebase==='undefined')return null;
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(cfg);
+    return firebase.storage();
+  }catch(e){return null;}
+}
+async function uploadFile(file, path, onProgress){
+  const storage=getStorage();
+  if(!storage)throw new Error('Firebase Storage が設定されていません');
+  const ref=storage.ref(path+'/'+Date.now()+'_'+file.name);
+  const task=ref.put(file);
+  return new Promise((resolve,reject)=>{
+    task.on('state_changed',
+      snap=>onProgress&&onProgress(Math.round(snap.bytesTransferred/snap.totalBytes*100)),
+      reject,
+      async()=>resolve({url:await task.snapshot.ref.getDownloadURL(),name:file.name,size:formatSize(file.size),type:getFileType(file)})
+    );
+  });
+}
+function formatSize(bytes){if(bytes<1024)return bytes+'B';if(bytes<1024*1024)return Math.round(bytes/1024)+'KB';return(bytes/1024/1024).toFixed(1)+'MB';}
+function getFileType(file){
+  const t=file.type;
+  if(t.startsWith('image/'))return 'image';
+  if(t==='application/pdf')return 'pdf';
+  return 'link';
 }
 
 // ─── EMAILJS ─────────────────────────────────────────────────────────────────
@@ -490,13 +521,15 @@ const BoardList = ({posts,onSelect,isAdmin,onNew}) => {
   );
 };
 
-const BoardDetail = ({post,onBack,onMarkRead,isAdmin}) => {
+const BoardDetail = ({post,onBack,onMarkRead,isAdmin,onDelete}) => {
   useEffect(()=>{if(post&&!post.isRead)onMarkRead(post.id)},[]);
   if(!post)return null;
   const cat=CATEGORY_MAP[post.category]||{};
+  const typeIcon={'image':'🖼️','pdf':'📄','link':'🔗'};
+  const handleDelete=()=>{if(confirm('この記事を削除しますか？')){onDelete(post.id);onBack();}};
   return (
     <div className="fade-in pb-24">
-      <Header title="お知らせ詳細" onBack={onBack}/>
+      <Header title="お知らせ詳細" onBack={onBack} right={isAdmin&&<button onClick={handleDelete} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="trash" size={13} color="white"/>削除</button>}/>
       <div className="px-4 pt-4">
         <div className="bg-white rounded-2xl p-5 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
@@ -511,12 +544,23 @@ const BoardDetail = ({post,onBack,onMarkRead,isAdmin}) => {
           </div>
           <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{post.body}</p>
           {post.attachments&&post.attachments.length>0&&(
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
               {post.attachments.map((a,i)=>(
-                <div key={i} className="flex items-center gap-2 text-sm text-blue-600 py-2">
-                  <Icon name="board" size={16} color="#2563eb"/>
-                  <span>{a.name}</span>
-                  <span className="text-xs text-gray-400">({a.size})</span>
+                <div key={i}>
+                  {a.type==='image'&&a.url?(
+                    <div>
+                      <a href={a.url} target="_blank" rel="noopener noreferrer">
+                        <img src={a.url} alt={a.name||'画像'} className="w-full rounded-xl border border-gray-100 mb-1" style={{maxHeight:'240px',objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>
+                      </a>
+                      {a.name&&<p className="text-xs text-gray-500">{a.name}</p>}
+                    </div>
+                  ):(
+                    <a href={a.url||'#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
+                      <span className="text-base">{typeIcon[a.type]||'📎'}</span>
+                      <span className="flex-1 truncate">{a.name||a.url||'添付ファイル'}</span>
+                      {a.size&&<span className="text-xs text-gray-400">({a.size})</span>}
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -528,9 +572,34 @@ const BoardDetail = ({post,onBack,onMarkRead,isAdmin}) => {
 };
 
 const PostForm = ({onBack,onSubmit}) => {
-  const [form,setForm]=useState({title:'',category:'notice',body:'',isPinned:false});
+  const [form,setForm]=useState({title:'',category:'notice',body:'',isPinned:false,attachments:[]});
   const [showTemplates,setShowTemplates]=useState(false);
-  const applyTemplate = (tpl) => { setForm(f=>({...f,title:tpl.title,category:tpl.category,body:tpl.body})); setShowTemplates(false); };
+  const [uploading,setUploading]=useState(false);
+  const [uploadProgress,setUploadProgress]=useState({});
+  const [hasStorage]=useState(()=>!!getStorage());
+  const fileInputRef=useRef(null);
+
+  const applyTemplate=(tpl)=>{setForm(f=>({...f,title:tpl.title,category:tpl.category,body:tpl.body,attachments:f.attachments}));setShowTemplates(false);};
+
+  const handleFileSelect=async(e)=>{
+    const files=Array.from(e.target.files);
+    if(!files.length)return;
+    setUploading(true);
+    for(const file of files){
+      try{
+        const result=await uploadFile(file,'posts',(pct)=>{
+          setUploadProgress(p=>({...p,[file.name]:pct}));
+        });
+        setForm(f=>({...f,attachments:[...f.attachments,result]}));
+        setUploadProgress(p=>{const n={...p};delete n[file.name];return n;});
+      }catch(err){
+        alert('アップロードに失敗しました: '+err.message);
+      }
+    }
+    setUploading(false);
+    e.target.value='';
+  };
+
   return (
     <div className="fade-in pb-24">
       <Header title="新規記事投稿" onBack={onBack}/>
@@ -566,11 +635,58 @@ const PostForm = ({onBack,onSubmit}) => {
             <label className="text-xs font-bold text-gray-500 mb-1 block">本文</label>
             <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[160px] resize-none" placeholder="記事の内容を入力" value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))}/>
           </div>
+
+          <div className="mb-4">
+            <label className="text-xs font-bold text-gray-500 mb-2 block">添付ファイル</label>
+            {hasStorage?(
+              <div>
+                <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" className="hidden" onChange={handleFileSelect}/>
+                <button onClick={()=>fileInputRef.current?.click()} disabled={uploading} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2 mb-2">
+                  <Icon name="plus" size={16} color="#2563eb"/>
+                  {uploading?'アップロード中...':'ファイルを選択（写真・PDF・Office）'}
+                </button>
+                {Object.entries(uploadProgress).map(([name,pct])=>(
+                  <div key={name} className="mb-2">
+                    <div className="flex justify-between text-xs text-gray-500 mb-1"><span className="truncate">{name}</span><span>{pct}%</span></div>
+                    <div className="bg-gray-100 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{width:pct+'%'}}/></div>
+                  </div>
+                ))}
+              </div>
+            ):(
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-700 mb-2">
+                Firebase設定済みの場合、ファイルを直接アップロードできます。<br/>現在はURLを貼り付ける形式です。
+              </div>
+            )}
+            {form.attachments.length>0&&(
+              <div className="space-y-1.5 mt-2">
+                {form.attachments.map((a,i)=>(
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                    <span className="text-base flex-shrink-0">{'image'===a.type?'🖼️':'pdf'===a.type?'📄':'📎'}</span>
+                    <span className="flex-1 text-xs text-gray-700 truncate">{a.name}</span>
+                    {a.size&&<span className="text-xs text-gray-400">{a.size}</span>}
+                    <button onClick={()=>setForm(f=>({...f,attachments:f.attachments.filter((_,j)=>j!==i)}))} className="text-red-400 text-sm ml-1 flex-shrink-0">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!hasStorage&&(
+              <button onClick={()=>setForm(f=>({...f,attachments:[...f.attachments,{type:'link',name:'',url:'',size:''}]}))} className="text-xs text-blue-600 border border-blue-200 rounded-lg px-3 py-1.5 mt-1">＋ URLで追加</button>
+            )}
+            {!hasStorage&&form.attachments.filter(a=>!a.url).map((a,i)=>(
+              <div key={i} className="flex gap-2 mt-1.5 items-center">
+                <input className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-xs" placeholder="ファイル名" value={a.name} onChange={e=>{const att=[...form.attachments];const ri=form.attachments.indexOf(a);att[ri]={...att[ri],name:e.target.value};setForm(f=>({...f,attachments:att}))}}/>
+                <input className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-xs" placeholder="URL" value={a.url} onChange={e=>{const att=[...form.attachments];const ri=form.attachments.indexOf(a);att[ri]={...att[ri],url:e.target.value};setForm(f=>({...f,attachments:att}))}}/>
+              </div>
+            ))}
+          </div>
+
           <label className="flex items-center gap-2 mb-4 cursor-pointer">
             <input type="checkbox" checked={form.isPinned} onChange={e=>setForm(f=>({...f,isPinned:e.target.checked}))} className="w-4 h-4 accent-blue-600"/>
             <span className="text-sm text-gray-600">ピン留めする（重要連絡に使用）</span>
           </label>
-          <button onClick={()=>form.title&&form.body&&onSubmit(form)} className={`w-full rounded-xl py-3 font-bold text-sm ${form.title&&form.body?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>公開する</button>
+          <button onClick={()=>!uploading&&form.title&&form.body&&onSubmit(form)} className={`w-full rounded-xl py-3 font-bold text-sm ${!uploading&&form.title&&form.body?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>
+            {uploading?'アップロード中...':'公開する'}
+          </button>
         </div>
       </div>
     </div>
@@ -702,7 +818,57 @@ const ConsultTop = ({onSelect}) => (
 const AnonConsult = ({onBack,onSubmit}) => {
   const [category,setCategory]=useState('');
   const [content,setContent]=useState('');
-  const code='CL-'+Math.floor(1000+Math.random()*9000);
+  const [submitted,setSubmitted]=useState(false);
+  const [myCode,setMyCode]=useState('');
+  const [copied,setCopied]=useState(false);
+
+  const handleSubmit=()=>{
+    if(!category||!content)return;
+    const code='CL-'+Math.floor(1000+Math.random()*9000);
+    onSubmit(category,content,code);
+    setMyCode(code);
+    setSubmitted(true);
+  };
+
+  const copyCode=()=>{
+    navigator.clipboard.writeText(myCode).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{});
+  };
+
+  if(submitted){
+    return(
+      <div className="fade-in pb-24">
+        <Header title="送信完了"/>
+        <div className="px-4 pt-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Icon name="check" size={32} color="#16a34a"/>
+            </div>
+            <p className="font-bold text-gray-900 text-base mb-1">送信しました</p>
+            <p className="text-sm text-gray-500 mb-6">担当者が確認し、対応いたします</p>
+
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 mb-4">
+              <p className="text-xs font-bold text-yellow-700 mb-2">⚠️ 必ず控えてください</p>
+              <p className="text-xs text-yellow-600 mb-3">この確認コードで対応状況を確認できます。<br/>画面を閉じると再表示できません。</p>
+              <div className="bg-white rounded-xl px-4 py-3 border border-yellow-200 mb-3">
+                <p className="text-2xl font-bold text-gray-900 tracking-widest">{myCode}</p>
+              </div>
+              <button onClick={copyCode} className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${copied?'bg-green-500 text-white':'bg-yellow-400 text-yellow-900'}`}>
+                {copied?'✓ コピーしました！':'確認コードをコピーする'}
+              </button>
+            </div>
+
+            <div className="bg-purple-50 rounded-xl p-3 text-xs text-purple-700 text-left mb-5">
+              <p className="font-bold mb-1">📱 スクリーンショットもおすすめ</p>
+              <p>この画面をスクリーンショットで保存しておくと安心です</p>
+            </div>
+
+            <button onClick={onBack} className="w-full border border-gray-200 rounded-xl py-3 text-sm text-gray-600 font-medium">相談トップに戻る</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fade-in pb-24">
       <Header title="匿名相談フォーム" onBack={onBack}/>
@@ -723,7 +889,7 @@ const AnonConsult = ({onBack,onSubmit}) => {
             <label className="text-xs font-bold text-gray-500 mb-1 block">相談内容</label>
             <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[140px] resize-none" placeholder="できるだけ詳しく教えてください。" value={content} onChange={e=>setContent(e.target.value)}/>
           </div>
-          <button onClick={()=>category&&content&&onSubmit(category,content,code)} className={`w-full rounded-xl py-3 font-bold text-sm ${category&&content?'bg-purple-600 text-white':'bg-gray-200 text-gray-400'}`}>匿名で送信する</button>
+          <button onClick={handleSubmit} className={`w-full rounded-xl py-3 font-bold text-sm ${category&&content?'bg-purple-600 text-white':'bg-gray-200 text-gray-400'}`}>匿名で送信する</button>
         </div>
       </div>
     </div>
@@ -1090,16 +1256,23 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
 
 const AdminMembers = ({onBack,members,setMembers,showToast}) => {
   const [showForm,setShowForm]=useState(false);
-  const [newMember,setNewMember]=useState({name:'',dept:'',email:'',role:'member',joinDate:''});
+  const [editId,setEditId]=useState(null);
+  const [formData,setFormData]=useState({name:'',dept:'',email:'',role:'member',joinDate:''});
   const [search,setSearch]=useState('');
 
-  const addMember = () => {
-    if(!newMember.name||!newMember.dept)return;
-    const nm={id:members.length+1,...newMember};
-    setMembers(ms=>[...ms,nm]);
-    setShowForm(false);
-    setNewMember({name:'',dept:'',email:'',role:'member',joinDate:''});
-    showToast('組合員を追加しました');
+  const openAdd = () => { setFormData({name:'',dept:'',email:'',role:'member',joinDate:''});setEditId(null);setShowForm(true); };
+  const openEdit = (m) => { setFormData({name:m.name,dept:m.dept,email:m.email,role:m.role,joinDate:m.joinDate||''});setEditId(m.id);setShowForm(true); };
+
+  const saveForm = () => {
+    if(!formData.name||!formData.dept)return;
+    if(editId){
+      setMembers(ms=>ms.map(m=>m.id===editId?{...m,...formData}:m));
+      showToast('組合員情報を更新しました');
+    } else {
+      setMembers(ms=>[...ms,{id:Date.now(),...formData}]);
+      showToast('組合員を追加しました');
+    }
+    setShowForm(false);setEditId(null);
   };
   const deleteMember = (id) => { if(confirm('削除しますか？'))setMembers(ms=>ms.filter(m=>m.id!==id)); };
 
@@ -1108,7 +1281,7 @@ const AdminMembers = ({onBack,members,setMembers,showToast}) => {
 
   return (
     <div className="fade-in pb-24">
-      <Header title="組合員管理" onBack={onBack} right={<button onClick={()=>setShowForm(true)} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
+      <Header title="組合員管理" onBack={onBack} right={<button onClick={openAdd} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
       <div className="px-4 pt-3">
         <div className="flex gap-2 mb-3 text-xs">
           <div className="flex-1 bg-white rounded-xl p-3 border border-gray-100 text-center"><p className="font-bold text-lg text-blue-700">{members.length}</p><p className="text-gray-500">総組合員</p></div>
@@ -1121,18 +1294,18 @@ const AdminMembers = ({onBack,members,setMembers,showToast}) => {
         </div>
         {showForm&&(
           <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
-            <p className="font-bold text-sm text-gray-900 mb-3">組合員追加</p>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="氏名" value={newMember.name} onChange={e=>setNewMember(f=>({...f,name:e.target.value}))}/>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="所属課" value={newMember.dept} onChange={e=>setNewMember(f=>({...f,dept:e.target.value}))}/>
-            <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="メールアドレス" value={newMember.email} onChange={e=>setNewMember(f=>({...f,email:e.target.value}))}/>
-            <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" value={newMember.joinDate} onChange={e=>setNewMember(f=>({...f,joinDate:e.target.value}))}/>
-            <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" value={newMember.role} onChange={e=>setNewMember(f=>({...f,role:e.target.value}))}>
+            <p className="font-bold text-sm text-gray-900 mb-3">{editId?'組合員情報を編集':'組合員追加'}</p>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="氏名 *" value={formData.name} onChange={e=>setFormData(f=>({...f,name:e.target.value}))}/>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="所属課 *" value={formData.dept} onChange={e=>setFormData(f=>({...f,dept:e.target.value}))}/>
+            <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="メールアドレス" value={formData.email} onChange={e=>setFormData(f=>({...f,email:e.target.value}))}/>
+            <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" value={formData.joinDate} onChange={e=>setFormData(f=>({...f,joinDate:e.target.value}))}/>
+            <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" value={formData.role} onChange={e=>setFormData(f=>({...f,role:e.target.value}))}>
               <option value="member">一般組合員</option>
               <option value="admin">執行部</option>
             </select>
             <div className="flex gap-2">
-              <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
-              <button onClick={addMember} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">追加する</button>
+              <button onClick={()=>{setShowForm(false);setEditId(null);}} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
+              <button onClick={saveForm} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">{editId?'保存する':'追加する'}</button>
             </div>
           </div>
         )}
@@ -1151,6 +1324,7 @@ const AdminMembers = ({onBack,members,setMembers,showToast}) => {
             </div>
             <div className="flex gap-1 flex-shrink-0">
               <button onClick={()=>setMembers(ms=>ms.map(x=>x.id===m.id?{...x,role:x.role==='admin'?'member':'admin'}:x))} className={`text-xs px-2 py-1 rounded-lg border ${m.role==='admin'?'border-red-200 text-red-500':'border-gray-200 text-gray-400'}`}>{m.role==='admin'?'管理者':'一般'}</button>
+              <button onClick={()=>openEdit(m)} className="p-2 text-gray-400 hover:text-blue-500 transition-colors"><Icon name="edit" size={16} color="currentColor"/></button>
               <button onClick={()=>deleteMember(m.id)} className="p-2 text-gray-300 hover:text-red-400 transition-colors"><Icon name="trash" size={16} color="currentColor"/></button>
             </div>
           </div>
@@ -1405,7 +1579,18 @@ const FirebaseSettings = ({onBack}) => {
           <p>2. プロジェクト作成 → Authentication → Email/Password を有効化</p>
           <p>3. Authentication → Users から組合員のアカウントを追加</p>
           <p>4. プロジェクト設定 → ウェブアプリ → 設定値をここに入力</p>
-          <p className="mt-1 text-blue-500">※ 組合員管理画面のメールアドレスと一致させてください</p>
+          <p className="font-bold mt-2 mb-1">📁 ファイル添付を使う場合（Storage）</p>
+          <p>5. 左メニュー「Storage」→「始める」→ 地域は asia-northeast1（東京）を選択</p>
+          <p>6. Rules タブで以下に書き換えて「公開」:</p>
+          <div style="fontFamily:'monospace',fontSize:'10px',background:'#dbeafe',padding:'6px',borderRadius:'4px',marginTop:'4px'}">{'rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}'}</div>
         </div>
         {saved2&&<div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-sm text-green-700 font-bold text-center">✓ 保存しました</div>}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
@@ -1502,13 +1687,13 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
           </div>
           <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>}
-        <button onClick={onNotifSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
+        {user.role==='admin'&&<button onClick={onNotifSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-700">メール通知設定</p>
             <p className="text-xs text-gray-400 mt-0.5">EmailJS でリアルタイム通知を設定</p>
           </div>
           <Icon name="chevron" size={16} color="#9ca3af"/>
-        </button>
+        </button>}
         <button className="w-full text-left px-4 py-3.5 flex items-center justify-between">
           <span className="text-sm text-gray-700">パスワード変更</span>
           <Icon name="chevron" size={16} color="#9ca3af"/>
@@ -1596,7 +1781,7 @@ const App = () => {
     const nc={id:consults.length+1,category,content,date:new Date().toISOString().slice(0,10),status:'未対応',confirmCode:code,adminNote:''};
     setConsults(cs=>[nc,...cs]);
     setConsultView('top');
-    showToast(`送信しました。確認コード: ${code} を控えてください`);
+    // 確認コードは AnonConsult 内の完了画面で表示
     if(notifOn('anonConsult')&&getEjsCfg().adminEmail){
       sendMail({type:'anonConsult',to:getEjsCfg().adminEmail,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が1件届いています。\nカテゴリ：${category}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面から内容をご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
     }
@@ -1628,7 +1813,7 @@ const App = () => {
     if(tab==='home')return <Dashboard posts={posts} surveys={surveys} onNav={handleNav} user={user}/>;
     if(tab==='board'){
       if(boardView==='new')return <PostForm onBack={()=>setBoardView('list')} onSubmit={addPost}/>;
-      if(boardView==='detail')return <BoardDetail post={selectedPost} onBack={()=>setBoardView('list')} onMarkRead={id=>setPosts(ps=>ps.map(p=>p.id===id?{...p,isRead:true,readCount:p.isRead?p.readCount:p.readCount+1}:p))} isAdmin={user.role==='admin'}/>;
+      if(boardView==='detail')return <BoardDetail post={selectedPost} onBack={()=>setBoardView('list')} onMarkRead={id=>setPosts(ps=>ps.map(p=>p.id===id?{...p,isRead:true,readCount:p.isRead?p.readCount:p.readCount+1}:p))} isAdmin={user.role==='admin'} onDelete={id=>setPosts(ps=>ps.filter(p=>p.id!==id))}/>;
       return <BoardList posts={posts} onSelect={p=>{setSelectedPost(p);setBoardView('detail');}} isAdmin={user.role==='admin'} onNew={()=>setBoardView('new')}/>;
     }
     if(tab==='survey'){
