@@ -1762,6 +1762,34 @@ const KyosaiScreen = ({onBack}) => {
   );
 };
 
+const ProfileSetupModal = ({user, onSave}) => {
+  const [name,setName]=useState('');
+  const [dept,setDept]=useState('');
+  const save=()=>{
+    if(!name.trim())return;
+    onSave(name.trim(), dept.trim());
+  };
+  return(
+    <div className="modal-overlay" style={{zIndex:100}}>
+      <div className="modal-box">
+        <h2 className="font-bold text-gray-900 text-base mb-1">プロフィール設定</h2>
+        <p className="text-sm text-gray-500 mb-1">初回ログインです。お名前と所属を教えてください。</p>
+        <p className="text-xs text-gray-400 mb-4">（登録後、管理者が役職・権限を設定します）</p>
+        <div className="mb-3">
+          <label className="text-xs font-bold text-gray-500 mb-1 block">お名前 *</label>
+          <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" placeholder="例：梶谷 大樹" value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&save()}/>
+        </div>
+        <div className="mb-4">
+          <label className="text-xs font-bold text-gray-500 mb-1 block">所属課</label>
+          <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" placeholder="例：総務課" value={dept} onChange={e=>setDept(e.target.value)}/>
+        </div>
+        <button onClick={save} className={`w-full rounded-xl py-3 font-bold text-sm ${name.trim()?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>保存する</button>
+      </div>
+    </div>
+  );
+};
+
+
 const AdminPromoteModal = ({user,onClose,onPromote}) => {
   const DEFAULT_CODE=localStorage.getItem('admin_setup_code')||'nishinoshima-admin';
   const [code,setCode]=useState('');
@@ -2110,6 +2138,7 @@ const App = () => {
   const [activities,setActivities]=useState(()=>loadData('union_activities',SAMPLE_ACTIVITIES));
   const [toast,setToast]=useState(null);
   const [adminSetupPrompt,setAdminSetupPrompt]=useState(false);
+  const [profileSetupPrompt,setProfileSetupPrompt]=useState(false);
 
   useEffect(()=>saveData('union_posts',posts),[posts]);
   useEffect(()=>saveData('union_surveys',surveys),[surveys]);
@@ -2254,7 +2283,13 @@ const App = () => {
   },[members]);
 
   const unreads={board:posts.filter(p=>!p.isRead).length,survey:surveys.filter(s=>s.status==='active'&&!s.isAnswered).length};
-  const handleUserLogin=(u)=>setUser(u);
+  const handleUserLogin=(u)=>{
+    setUser(u);
+    // 名前がメールアドレス(@前)のままならプロフィール設定を促す
+    if(u.name===u.email.split('@')[0]){
+      setProfileSetupPrompt(true);
+    }
+  };
   if(!user)return <LoginScreen onLogin={handleUserLogin}/>;
 
   const renderContent=()=>{
@@ -2316,6 +2351,20 @@ const App = () => {
       </div>
       {/* モバイル用ボトムナビ */}
       {showNav&&<div className="md:hidden"><BottomNav active={tab} onChange={changeTab} unreads={unreads}/></div>}
+      {profileSetupPrompt&&user&&(
+        <ProfileSetupModal user={user} onSave={(name,dept)=>{
+          const updated={...user,name,dept};
+          setUser(updated);
+          // メンバーリストに追加/更新
+          setMembers(ms=>{
+            const exists=ms.some(m=>m.email===user.email);
+            const newMs=exists?ms.map(m=>m.email===user.email?{...m,name,dept}:m):[...ms,{id:Date.now(),name,dept,email:user.email,role:'member',joinDate:new Date().toISOString().slice(0,10)}];
+            saveData('union_members',newMs);
+            return newMs;
+          });
+          setProfileSetupPrompt(false);
+        }}/>
+      )}
       {adminSetupPrompt&&(
         <AdminPromoteModal
           user={user}
