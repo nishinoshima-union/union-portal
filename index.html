@@ -285,7 +285,7 @@ const DesktopSidebar = ({active,subScreen,onChange,user,unreads,onLogout,onAdmin
         {id:'kyosai',icon:'kyosai',label:'自治労共済'},
       ].map(({id,icon,label})=>{
         const cnt=unreads[id]||0;
-        const isActive=active===id;
+        const isActive=id==='kyosai'?(subScreen==='kyosai'):(id==='home'||id==='board'||id==='survey'||id==='consult'||id==='menu')?active===id&&!subScreen:active===id;
         return(
           <button key={id} onClick={()=>onChange(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${isActive?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
             <Icon name={icon} size={18} color="currentColor"/>
@@ -297,7 +297,7 @@ const DesktopSidebar = ({active,subScreen,onChange,user,unreads,onLogout,onAdmin
       {user.role==='admin'&&(<>
         <p className="text-blue-400 text-xs font-bold px-2 mt-4 mb-2">管理者メニュー</p>
         {[['consults','相談管理'],['surveys','アンケート管理'],['members','組合員管理'],['faqs','FAQ管理']].map(([id,label])=>(
-          <button key={id} onClick={()=>onAdminNav(id)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+          <button key={id} onClick={()=>onAdminNav(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${subScreen==='admin_'+id?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
             <Icon name="edit" size={16} color="currentColor"/>
             <span className="text-sm">{label}</span>
           </button>
