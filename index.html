@@ -86,9 +86,9 @@ const SAMPLE_POSTS=[
   {id:4,title:'夏のレクリエーション参加者募集！',category:'event',body:'今年度の夏レクリエーションを以下のとおり開催します。\n\n■ 内容：BBQ大会＆スポーツ大会\n■ 日時：2026年7月19日（土）10:00〜\n■ 場所：西ノ島浦郷港公園\n\n家族参加も大歓迎です！',isPinned:false,authorName:'厚生部 鈴木',publishedAt:'2026-05-20',readCount:45,totalCount:58,isRead:true,attachments:[]},
 ];
 const SAMPLE_SURVEYS=[
-  {id:1,title:'定期大会 出欠確認',description:'6月20日開催の定期大会への出欠をお知らせください。',endAt:'2026-06-15',status:'active',isAnswered:false,answerCount:38,totalCount:58,options:['出席','欠席','未定']},
-  {id:2,title:'令和6年度 組合活動に関する意識調査',description:'組合活動の改善のため、皆さまのご意見をお聞かせください。',endAt:'2026-06-30',status:'active',isAnswered:false,answerCount:22,totalCount:58,options:['非常に満足','満足','普通','不満','非常に不満']},
-  {id:3,title:'夏レクリエーション参加申込',description:'7月19日の夏レク参加希望をお知らせください。',endAt:'2026-07-05',status:'active',isAnswered:true,answerCount:29,totalCount:58,options:['参加する','参加しない']},
+  {id:1,title:'定期大会 出欠確認',description:'6月20日開催の定期大会への出欠をお知らせください。',endAt:'2026-06-15',status:'active',isAnswered:false,answerCount:38,totalCount:58,type:'single',options:['出席','欠席','未定']},
+  {id:2,title:'令和6年度 組合活動に関する意識調査',description:'組合活動の改善のため、皆さまのご意見をお聞かせください。',endAt:'2026-06-30',status:'active',isAnswered:false,answerCount:22,totalCount:58,type:'rating',options:[]},
+  {id:3,title:'夏レクリエーション参加申込',description:'7月19日の夏レク参加希望をお知らせください。',endAt:'2026-07-05',status:'active',isAnswered:true,answerCount:29,totalCount:58,type:'multi',options:['参加する（本人のみ）','参加する（家族同伴）','参加しない']},
 ];
 const SAMPLE_FAQS=[
   {id:1,category:'労働時間・休暇',q:'有給休暇の申請方法を教えてください',a:'有給休暇は原則として取得希望日の3日前までに所属長へ申請してください。繁忙期であっても取得する権利がありますので、遠慮せずに申請してください。'},
@@ -98,6 +98,68 @@ const SAMPLE_FAQS=[
   {id:5,category:'組合制度・手続き',q:'慶弔見舞金はどのような場合にもらえますか？',a:'①結婚祝金　②出産祝金　③弔慰金（本人・配偶者・子・親）　④入院見舞金（7日以上）などがあります。詳しくは執行部へ。'},
   {id:6,category:'組合制度・手続き',q:'組合費はいくらですか？何に使われていますか？',a:'組合費は月例給の約0.5%です。主な使途：組合活動費・上部団体費・福利厚生補助・慶弔見舞金積立・運営事務費。毎年の定期大会で決算報告を行っています。'},
 ];
+const SAMPLE_OFFICERS=[
+  {id:1,title:'執行委員長',name:'田中 一郎',dept:'総務課',note:''},
+  {id:2,title:'副委員長',name:'山本 花子',dept:'住民課',note:''},
+  {id:3,title:'書記長',name:'佐藤 健二',dept:'産業振興課',note:''},
+  {id:4,title:'書記次長',name:'鈴木 美咲',dept:'福祉課',note:''},
+  {id:5,title:'会計',name:'中村 太郎',dept:'建設課',note:''},
+  {id:6,title:'会計監査',name:'小林 和子',dept:'教育委員会',note:''},
+  {id:7,title:'厚生部長',name:'加藤 博',dept:'住民課',note:''},
+  {id:8,title:'青年部長',name:'伊藤 翼',dept:'総務課',note:''},
+];
+const UNION_RULES_DEFAULT=`第1章 総則
+
+第1条（名称）
+本組合は西ノ島町職員労働組合という。
+
+第2条（目的）
+本組合は組合員の労働条件の維持改善及び経済的・社会的地位の向上を図ることを目的とする。
+
+第3条（組織）
+本組合は西ノ島町に勤務する一般職の職員をもって組織する。
+
+第2章 組合員
+
+第4条（資格）
+本組合の組合員は西ノ島町の一般職員とする。ただし、管理職員はこの限りでない。
+
+第5条（権利）
+組合員は均等に組合の運営に参与する権利を有する。
+
+第6条（義務）
+組合員は組合費を納入する義務を負う。
+
+第3章 役員
+
+第7条（役員）
+本組合に次の役員を置く。
+執行委員長1名、副委員長1名、書記長1名、書記次長1名、会計1名、会計監査1名
+
+第8条（任期）
+役員の任期は2年とする。ただし、再任を妨げない。
+
+第4章 会議
+
+第9条（定期大会）
+定期大会は年1回開催する。
+
+第10条（臨時大会）
+臨時大会は執行委員会が必要と認めたとき、または組合員の3分の1以上の要求があるときに開催する。
+
+第5章 会計
+
+第11条（組合費）
+組合費は月例給の1000分の5とする。
+
+第12条（会計年度）
+本組合の会計年度は4月1日に始まり翌年3月31日に終わる。`;
+const SAMPLE_ACTIVITIES=[
+  {id:1,title:'令和6年度 定期大会',date:'2026-06-20',body:'令和6年度定期大会を西ノ島町民会館にて開催しました。組合員58名中42名が出席し、令和6年度の活動方針・予算案を承認しました。',imageUrl:'',tags:['大会']},
+  {id:2,title:'夏季賞与交渉 妥結報告',date:'2026-06-01',body:'令和6年度夏季賞与について当局と交渉を行い、月例給2.2月分（前年比0.1月増）で妥結しました。組合員の皆さまのご支持に感謝いたします。',imageUrl:'',tags:['交渉']},
+  {id:3,title:'春の職場環境改善キャンペーン',date:'2026-04-15',body:'「声をあげよう」をテーマに職場環境改善キャンペーンを実施。組合員アンケートには51名が回答し、時間外勤務の削減と休暇取得促進について当局と協議しました。',imageUrl:'',tags:['活動']},
+];
+
 const SAMPLE_CONSULTS=[
   {id:1,category:'労働時間・休暇',content:'上司から毎日のように残業を強要されています。断れない雰囲気があり困っています。',date:'2026-06-02',status:'未対応',confirmCode:'CL-2340',adminNote:''},
   {id:2,category:'ハラスメント',content:'特定の職員に対して他の職員の前で叱責することが繰り返されています。',date:'2026-06-01',status:'対応中',confirmCode:'CL-2339',adminNote:'担当者が状況確認中。6/10に面談予定。'},
@@ -369,7 +431,7 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
           </button>
         ))}
 
-        <div className="grid grid-cols-2 gap-3 mt-4">
+        <div className="grid grid-cols-2 gap-3 mt-4 [&>*]:min-w-0">
           <button onClick={()=>onNav('consult')} className="bg-white rounded-xl p-4 border border-gray-100 card-hover text-left">
             <Icon name="consult" size={24} color="#2563eb"/>
             <p className="text-sm font-bold text-gray-800 mt-2">労働相談</p>
@@ -379,6 +441,11 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
             <Icon name="kyosai" size={24} color="#16a34a"/>
             <p className="text-sm font-bold text-gray-800 mt-2">自治労共済</p>
             <p className="text-xs text-gray-400 mt-0.5">制度・手続き案内</p>
+          </button>
+          <button onClick={()=>onNav('union_info')} className="bg-white rounded-xl p-4 border border-gray-100 card-hover text-left">
+            <Icon name="board" size={24} color="#7c3aed"/>
+            <p className="text-sm font-bold text-gray-800 mt-2">組合について</p>
+            <p className="text-xs text-gray-400 mt-0.5">役員・規約・活動記録</p>
           </button>
         </div>
       </div>
@@ -542,24 +609,61 @@ const SurveyList = ({surveys,onSelect}) => (
 );
 
 const SurveyAnswer = ({survey,onBack,onSubmit}) => {
-  const [selected,setSelected]=useState(null);
+  const [selected,setSelected]=useState(null);   // single
+  const [multiSel,setMultiSel]=useState([]);      // multi
+  const [rating,setRating]=useState(0);           // rating
+  const [freeText,setFreeText]=useState('');      // text
   if(!survey)return null;
+  const type=survey.type||'single';
+  const canSubmit=(type==='single'&&selected!==null)||(type==='multi'&&multiSel.length>0)||(type==='rating'&&rating>0)||(type==='text'&&freeText.trim().length>0);
+  const toggleMulti=(i)=>setMultiSel(ms=>ms.includes(i)?ms.filter(x=>x!==i):[...ms,i]);
   return (
     <div className="fade-in pb-24">
       <Header title="アンケート回答" onBack={onBack}/>
       <div className="px-4 pt-4">
         <div className="bg-white rounded-2xl p-5 border border-gray-100">
           <h2 className="text-base font-bold text-gray-900 mb-2">{survey.title}</h2>
-          <p className="text-sm text-gray-500 mb-4">{survey.description}</p>
-          <p className="text-xs text-gray-400 mb-3">回答期限：{survey.endAt}</p>
-          <div className="space-y-2 mb-6">
-            {(survey.options||['はい','いいえ']).map((opt,i)=>(
-              <button key={i} onClick={()=>setSelected(i)} className={`w-full border-2 rounded-xl px-4 py-3 text-sm text-left transition-colors ${selected===i?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-gray-200 text-gray-700'}`}>
-                {opt}
-              </button>
-            ))}
+          <p className="text-sm text-gray-500 mb-2">{survey.description}</p>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xs text-gray-400">回答期限：{survey.endAt}</span>
+            <span className="tag bg-gray-100 text-gray-500 text-xs">{{single:'単一選択',multi:'複数選択',rating:'5段階評価',text:'自由記述'}[type]}</span>
           </div>
-          <button onClick={()=>selected!==null&&onSubmit()} className={`w-full rounded-xl py-3 font-bold text-sm ${selected!==null?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>回答を送信する</button>
+          {type==='single'&&(
+            <div className="space-y-2 mb-6">
+              {(survey.options||['はい','いいえ']).map((opt,i)=>(
+                <button key={i} onClick={()=>setSelected(i)} className={`w-full border-2 rounded-xl px-4 py-3 text-sm text-left transition-colors ${selected===i?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-gray-200 text-gray-700'}`}>{opt}</button>
+              ))}
+            </div>
+          )}
+          {type==='multi'&&(
+            <div className="space-y-2 mb-6">
+              <p className="text-xs text-gray-400 mb-2">複数選択できます</p>
+              {(survey.options||[]).map((opt,i)=>(
+                <button key={i} onClick={()=>toggleMulti(i)} className={`w-full border-2 rounded-xl px-4 py-3 text-sm text-left flex items-center gap-3 transition-colors ${multiSel.includes(i)?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-700'}`}>
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${multiSel.includes(i)?'bg-blue-600 border-blue-600':'border-gray-300'}`}>{multiSel.includes(i)&&<Icon name="check" size={12} color="white"/>}</div>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
+          {type==='rating'&&(
+            <div className="mb-6 text-center">
+              <p className="text-xs text-gray-500 mb-4">1（不満）〜 5（満足）</p>
+              <div className="flex justify-center gap-3 mb-3">
+                {[1,2,3,4,5].map(n=>(
+                  <button key={n} onClick={()=>setRating(n)} className={`w-14 h-14 rounded-2xl border-2 text-xl font-bold transition-all ${rating>=n?'border-yellow-400 bg-yellow-50 text-yellow-500 scale-110':'border-gray-200 text-gray-300'}`}>{'★'}</button>
+                ))}
+              </div>
+              <p className="text-sm text-gray-600 font-medium">{rating>0?['','非常に不満','不満','普通','満足','非常に満足'][rating]:''}</p>
+            </div>
+          )}
+          {type==='text'&&(
+            <div className="mb-6">
+              <textarea className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm min-h-[120px] resize-none" placeholder="ご意見・ご回答をご記入ください" value={freeText} onChange={e=>setFreeText(e.target.value)}/>
+              <p className="text-xs text-gray-400 mt-1 text-right">{freeText.length}文字</p>
+            </div>
+          )}
+          <button onClick={()=>canSubmit&&onSubmit()} className={`w-full rounded-xl py-3 font-bold text-sm ${canSubmit?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>回答を送信する</button>
         </div>
       </div>
     </div>
@@ -889,14 +993,14 @@ const AdminConsults = ({onBack,consults,setConsults}) => {
 
 const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
   const [showForm,setShowForm]=useState(false);
-  const [newSurvey,setNewSurvey]=useState({title:'',description:'',endAt:'',options:['','']});
+  const [newSurvey,setNewSurvey]=useState({title:'',description:'',endAt:'',type:'single',options:['','']});
   const [viewResult,setViewResult]=useState(null);
 
   const addOption = () => setNewSurvey(f=>({...f,options:[...f.options,'']}));
   const updateOption = (i,v) => setNewSurvey(f=>({...f,options:f.options.map((o,j)=>j===i?v:o)}));
   const createSurvey = () => {
     if(!newSurvey.title||!newSurvey.endAt)return;
-    const ns={id:surveys.length+1,...newSurvey,options:newSurvey.options.filter(Boolean),status:'active',isAnswered:false,answerCount:0,totalCount:58};
+    const ns={id:surveys.length+1,...newSurvey,options:newSurvey.type==='rating'||newSurvey.type==='text'?[]:newSurvey.options.filter(Boolean),status:'active',isAnswered:false,answerCount:0,totalCount:58};
     setSurveys(ss=>[ns,...ss]);
     setShowForm(false);
     setNewSurvey({title:'',description:'',endAt:'',options:['','']});
@@ -936,13 +1040,25 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
           <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
             <p className="font-bold text-sm text-gray-900 mb-3">新規アンケート作成</p>
             <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="タイトル" value={newSurvey.title} onChange={e=>setNewSurvey(f=>({...f,title:e.target.value}))}/>
+            <div className="mb-2">
+              <p className="text-xs text-gray-500 mb-1">回答方式</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[['single','単一選択'],['multi','複数選択'],['rating','5段階評価'],['text','自由記述']].map(([v,l])=>(
+                  <button key={v} onClick={()=>setNewSurvey(f=>({...f,type:v}))} className={`border rounded-lg py-1.5 text-xs font-medium transition-colors ${newSurvey.type===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{l}</button>
+                ))}
+              </div>
+            </div>
             <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none" rows={2} placeholder="説明文" value={newSurvey.description} onChange={e=>setNewSurvey(f=>({...f,description:e.target.value}))}/>
             <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" value={newSurvey.endAt} onChange={e=>setNewSurvey(f=>({...f,endAt:e.target.value}))}/>
-            <p className="text-xs font-bold text-gray-500 mb-1">選択肢</p>
-            {newSurvey.options.map((opt,i)=>(
-              <input key={i} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-1.5" placeholder={`選択肢 ${i+1}`} value={opt} onChange={e=>updateOption(i,e.target.value)}/>
-            ))}
-            <button onClick={addOption} className="text-xs text-blue-600 mb-3">＋ 選択肢を追加</button>
+            {(newSurvey.type==='single'||newSurvey.type==='multi')&&(<>
+              <p className="text-xs font-bold text-gray-500 mb-1">選択肢</p>
+              {newSurvey.options.map((opt,i)=>(
+                <input key={i} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-1.5" placeholder={`選択肢 ${i+1}`} value={opt} onChange={e=>updateOption(i,e.target.value)}/>
+              ))}
+              <button onClick={addOption} className="text-xs text-blue-600 mb-3">＋ 選択肢を追加</button>
+            </>)}
+            {newSurvey.type==='rating'&&<p className="text-xs text-gray-400 mb-3">★ 1〜5 の5段階評価です（選択肢の入力不要）</p>}
+            {newSurvey.type==='text'&&<p className="text-xs text-gray-400 mb-3">📝 自由記述式です（選択肢の入力不要）</p>}
             <div className="flex gap-2">
               <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
               <button onClick={createSurvey} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">作成する</button>
@@ -1033,9 +1149,10 @@ const AdminMembers = ({onBack,members,setMembers,showToast}) => {
               <p className="text-xs text-gray-500">{m.dept}</p>
               <p className="text-xs text-gray-400">{m.email}</p>
             </div>
-            <button onClick={()=>deleteMember(m.id)} className="p-2 text-gray-300 hover:text-red-400 transition-colors">
-              <Icon name="trash" size={16} color="currentColor"/>
-            </button>
+            <div className="flex gap-1 flex-shrink-0">
+              <button onClick={()=>setMembers(ms=>ms.map(x=>x.id===m.id?{...x,role:x.role==='admin'?'member':'admin'}:x))} className={`text-xs px-2 py-1 rounded-lg border ${m.role==='admin'?'border-red-200 text-red-500':'border-gray-200 text-gray-400'}`}>{m.role==='admin'?'管理者':'一般'}</button>
+              <button onClick={()=>deleteMember(m.id)} className="p-2 text-gray-300 hover:text-red-400 transition-colors"><Icon name="trash" size={16} color="currentColor"/></button>
+            </div>
           </div>
         ))}
       </div>
@@ -1094,6 +1211,125 @@ const AdminFAQs = ({onBack,faqs,setFaqs,showToast}) => {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+
+// ─── 組合情報ページ ───────────────────────────────────────────────────────────
+const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActivities,showToast}) => {
+  const [tab,setTab]=useState('officers');
+  const [rules,setRules]=useState(()=>loadData('union_rules',null)||UNION_RULES_DEFAULT);
+  const [editRules,setEditRules]=useState(false);
+  const [rulesText,setRulesText]=useState(rules);
+  const [showActForm,setShowActForm]=useState(false);
+  const [showOffForm,setShowOffForm]=useState(false);
+  const [actForm,setActForm]=useState({title:'',date:'',body:'',imageUrl:'',tags:''});
+  const [offForm,setOffForm]=useState({title:'',name:'',dept:'',note:''});
+
+  const saveRules=()=>{saveData('union_rules',rulesText);setRules(rulesText);setEditRules(false);showToast('組合規約を保存しました');};
+  const addActivity=()=>{
+    if(!actForm.title||!actForm.date||!actForm.body)return;
+    const na={id:Date.now(),...actForm,tags:actForm.tags?actForm.tags.split(',').map(t=>t.trim()):[]};
+    setActivities(as=>[na,...as]);
+    setShowActForm(false);setActForm({title:'',date:'',body:'',imageUrl:'',tags:''});
+    showToast('活動記録を追加しました');
+  };
+  const deleteActivity=(id)=>{if(confirm('削除しますか？'))setActivities(as=>as.filter(a=>a.id!==id));};
+  const addOfficer=()=>{
+    if(!offForm.title||!offForm.name)return;
+    setOfficers(os=>[...os,{id:Date.now(),...offForm}]);
+    setShowOffForm(false);setOffForm({title:'',name:'',dept:'',note:''});
+    showToast('役員を追加しました');
+  };
+  const deleteOfficer=(id)=>{if(confirm('削除しますか？'))setOfficers(os=>os.filter(o=>o.id!==id));};
+
+  const tabs=[['officers','役員体制'],['rules','組合規約'],['activities','活動記録']];
+  return(
+    <div className="fade-in pb-24">
+      <Header title="組合について" onBack={onBack}/>
+      <div className="flex border-b border-gray-200 bg-white">
+        {tabs.map(([id,label])=>(
+          <button key={id} onClick={()=>setTab(id)} className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors ${tab===id?'border-blue-600 text-blue-700':'border-transparent text-gray-500'}`}>{label}</button>
+        ))}
+      </div>
+      <div className="px-4 pt-4">
+        {tab==='officers'&&(
+          <div>
+            {isAdmin&&<button onClick={()=>setShowOffForm(true)} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium mb-4 flex items-center justify-center gap-2"><Icon name="plus" size={16} color="#2563eb"/>役員を追加</button>}
+            {showOffForm&&(
+              <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
+                <p className="font-bold text-sm text-gray-900 mb-3">役員追加</p>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="役職（例：執行委員長）" value={offForm.title} onChange={e=>setOffForm(f=>({...f,title:e.target.value}))}/>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="氏名" value={offForm.name} onChange={e=>setOffForm(f=>({...f,name:e.target.value}))}/>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="所属課" value={offForm.dept} onChange={e=>setOffForm(f=>({...f,dept:e.target.value}))}/>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" placeholder="備考（任意）" value={offForm.note} onChange={e=>setOffForm(f=>({...f,note:e.target.value}))}/>
+                <div className="flex gap-2"><button onClick={()=>setShowOffForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button><button onClick={addOfficer} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">追加する</button></div>
+              </div>
+            )}
+            <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+              {officers.map(o=>(
+                <div key={o.id} className="px-4 py-3.5 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><span className="text-xs font-bold text-blue-700">{o.name[0]}</span></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-blue-600 font-bold">{o.title}</p>
+                    <p className="text-sm font-bold text-gray-900">{o.name}</p>
+                    <p className="text-xs text-gray-500">{o.dept}{o.note&&` ・ ${o.note}`}</p>
+                  </div>
+                  {isAdmin&&<button onClick={()=>deleteOfficer(o.id)} className="p-1.5 text-gray-300 hover:text-red-400"><Icon name="trash" size={14} color="currentColor"/></button>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {tab==='rules'&&(
+          <div>
+            {isAdmin&&!editRules&&<button onClick={()=>{setRulesText(rules);setEditRules(true);}} className="w-full border border-blue-200 text-blue-600 rounded-xl py-2.5 text-sm font-medium mb-4 flex items-center justify-center gap-2"><Icon name="edit" size={15} color="#2563eb"/>規約を編集する</button>}
+            {editRules?(
+              <div>
+                <textarea className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm resize-none min-h-[400px] font-mono" value={rulesText} onChange={e=>setRulesText(e.target.value)}/>
+                <div className="flex gap-2 mt-3"><button onClick={()=>setEditRules(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button><button onClick={saveRules} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">保存する</button></div>
+              </div>
+            ):(
+              <div className="bg-white rounded-xl border border-gray-100 p-4">
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">{rules}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {tab==='activities'&&(
+          <div>
+            {isAdmin&&<button onClick={()=>setShowActForm(true)} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium mb-4 flex items-center justify-center gap-2"><Icon name="plus" size={16} color="#2563eb"/>活動記録を追加</button>}
+            {showActForm&&(
+              <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
+                <p className="font-bold text-sm text-gray-900 mb-3">活動記録追加</p>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="タイトル" value={actForm.title} onChange={e=>setActForm(f=>({...f,title:e.target.value}))}/>
+                <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" value={actForm.date} onChange={e=>setActForm(f=>({...f,date:e.target.value}))}/>
+                <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none min-h-[80px]" placeholder="活動内容" value={actForm.body} onChange={e=>setActForm(f=>({...f,body:e.target.value}))}/>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="画像URL（Google フォト等のリンク）" value={actForm.imageUrl} onChange={e=>setActForm(f=>({...f,imageUrl:e.target.value}))}/>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" placeholder="タグ（カンマ区切り例：大会,交渉）" value={actForm.tags} onChange={e=>setActForm(f=>({...f,tags:e.target.value}))}/>
+                <div className="flex gap-2"><button onClick={()=>setShowActForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button><button onClick={addActivity} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">追加する</button></div>
+              </div>
+            )}
+            {activities.map(a=>(
+              <div key={a.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-gray-400">{a.date}</span>
+                      {(a.tags||[]).map((t,i)=><span key={i} className="tag bg-blue-50 text-blue-600">{t}</span>)}
+                    </div>
+                    <p className="text-sm font-bold text-gray-900 mb-1">{a.title}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{a.body}</p>
+                    {a.imageUrl&&<a href={a.imageUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block text-xs text-blue-500 underline">📷 写真を見る</a>}
+                  </div>
+                  {isAdmin&&<button onClick={()=>deleteActivity(a.id)} className="p-1.5 text-gray-300 hover:text-red-400 flex-shrink-0"><Icon name="trash" size={14} color="currentColor"/></button>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1181,7 +1417,7 @@ const NotificationSettings = ({onBack}) => {
   );
 };
 
-const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav}) => (
+const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav,onUnionInfo}) => (
   <div className="fade-in pb-24">
     <Header title="メニュー"/>
     <div className="px-4 pt-4">
@@ -1210,13 +1446,13 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
       )}
       <p className="text-xs font-bold text-gray-400 mb-2 px-1">アカウント・設定</p>
       <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
-        <button onClick={onFirebaseSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
+        {user.role==='admin'&&<button onClick={onFirebaseSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-700">Firebaseログイン設定</p>
             <p className="text-xs text-gray-400 mt-0.5">{getFbConfig()?'✓ Firebase認証 有効':'デモモード（未設定）'}</p>
           </div>
           <Icon name="chevron" size={16} color="#9ca3af"/>
-        </button>
+        </button>}
         <button onClick={onNotifSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-700">メール通知設定</p>
@@ -1229,7 +1465,15 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
           <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>
       </div>
+      <p className="text-xs font-bold text-gray-400 mb-2 px-1">組合情報</p>
       <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
+        <button onClick={onUnionInfo} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-700">役員体制・組合規約・活動記録</p>
+            <p className="text-xs text-gray-400 mt-0.5">組合の基本情報</p>
+          </div>
+          <Icon name="chevron" size={16} color="#9ca3af"/>
+        </button>
         <button className="w-full text-left px-4 py-3.5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-700">西ノ島町職員労働組合</p>
@@ -1258,6 +1502,8 @@ const App = () => {
   const [consults,setConsults]=useState(()=>loadData('union_consults',SAMPLE_CONSULTS));
   const [members,setMembers]=useState(()=>loadData('union_members',SAMPLE_MEMBERS));
   const [faqs,setFaqs]=useState(()=>loadData('union_faqs',SAMPLE_FAQS));
+  const [officers,setOfficers]=useState(()=>loadData('union_officers',SAMPLE_OFFICERS));
+  const [activities,setActivities]=useState(()=>loadData('union_activities',SAMPLE_ACTIVITIES));
   const [toast,setToast]=useState(null);
 
   useEffect(()=>saveData('union_posts',posts),[posts]);
@@ -1265,6 +1511,8 @@ const App = () => {
   useEffect(()=>saveData('union_consults',consults),[consults]);
   useEffect(()=>saveData('union_members',members),[members]);
   useEffect(()=>saveData('union_faqs',faqs),[faqs]);
+  useEffect(()=>saveData('union_officers',officers),[officers]);
+  useEffect(()=>saveData('union_activities',activities),[activities]);
 
   const showToast=msg=>setToast(msg);
   const clearSub=()=>setSubScreen(null);
@@ -1275,6 +1523,7 @@ const App = () => {
     if(t==='survey'){setSurveyView(item?'answer':'list');setSelectedSurvey(item);}
     if(t==='consult')setConsultView('top');
     if(t==='kyosai')setSubScreen('kyosai');
+    if(t==='union_info')setSubScreen('union_info');
   };
 
   const addPost=async(form)=>{
@@ -1314,6 +1563,7 @@ const App = () => {
   const renderContent=()=>{
     if(subScreen==='notif')return <NotificationSettings onBack={clearSub}/>;
     if(subScreen==='firebase')return <FirebaseSettings onBack={clearSub}/>;
+    if(subScreen==='union_info')return <UnionInfoScreen onBack={clearSub} isAdmin={user.role==='admin'} officers={officers} setOfficers={setOfficers} activities={activities} setActivities={setActivities} showToast={showToast}/>;
     if(subScreen==='admin_consults')return <AdminConsults onBack={clearSub} consults={consults} setConsults={setConsults}/>;
     if(subScreen==='admin_surveys')return <AdminSurveys onBack={clearSub} surveys={surveys} setSurveys={setSurveys} showToast={showToast}/>;
     if(subScreen==='admin_members')return <AdminMembers onBack={clearSub} members={members} setMembers={setMembers} showToast={showToast}/>;
@@ -1335,7 +1585,7 @@ const App = () => {
       if(consultView==='reserve')return <ReserveScreen onBack={()=>setConsultView('top')} onSubmit={handleReserveSubmit}/>;
       return <ConsultTop onSelect={v=>setConsultView(v)}/>;
     }
-    if(tab==='menu')return <MenuScreen user={user} onLogout={()=>{setUser(null);setTab('home');}} onNotifSettings={()=>setSubScreen('notif')} onFirebaseSettings={()=>setSubScreen('firebase')} onAdminNav={id=>setSubScreen('admin_'+id)}/>;
+    if(tab==='menu')return <MenuScreen user={user} onLogout={()=>{setUser(null);setTab('home');}} onNotifSettings={()=>setSubScreen('notif')} onFirebaseSettings={()=>setSubScreen('firebase')} onAdminNav={id=>setSubScreen('admin_'+id)} onUnionInfo={()=>setSubScreen('union_info')}/>;
     return null;
   };
 
