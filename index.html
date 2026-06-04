@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>西ノ島町職員労働組合 組合員ポータル</title>
+<title>西ノ島町職員組合 組合員ポータル</title>
 <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
 <script crossorigin src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
@@ -49,7 +49,7 @@ function saveData(key,data){
 }
 
 // ★ 管理者はここに Firebase 設定を埋め込んでください（設定後HTMLをダウンロードしてGitHub Pagesに上書きアップ）
-const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authDomain":"nishinoshima-town.firebaseapp.com","projectId":"nishinoshima-town"}; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
+const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authDomain":"nishinoshima-town.firebaseapp.com","projectId":"nishinoshima-town","storageBucket":"nishinoshima-town.appspot.com"}; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
 
 function getFbConfig(){
   if(FIREBASE_CONFIG)return FIREBASE_CONFIG;
@@ -98,7 +98,7 @@ async function sendMail({to,subject,body,senderName,type}){
   const cfg=getEjsCfg();
   if(!cfg.publicKey||!cfg.serviceId||!cfg.templateId||!to){console.info('[mail] skipped:',subject);return{skipped:true}}
   emailjs.init({publicKey:cfg.publicKey});
-  return emailjs.send(cfg.serviceId,cfg.templateId,{to_email:to,subject,body,sender_name:senderName||'西ノ島町職員労働組合',notify_type:type||'',app_url:window.location.href});
+  return emailjs.send(cfg.serviceId,cfg.templateId,{to_email:to,subject,body,sender_name:senderName||'西ノ島町職員組合',notify_type:type||'',app_url:window.location.href});
 }
 
 const CATEGORY_MAP={
@@ -173,7 +173,7 @@ const SAMPLE_CONSULTS=[
 const UNION_RULES_DEFAULT=`第1章 総則
 
 第1条（名称）
-本組合は西ノ島町職員労働組合という。
+本組合は西ノ島町職員組合という。
 
 第2条（目的）
 本組合は組合員の労働条件の維持改善及び経済的・社会的地位の向上を図ることを目的とする。
@@ -262,6 +262,75 @@ const Toast = ({msg,onClose}) => {
   useEffect(()=>{const t=setTimeout(onClose,3000);return()=>clearTimeout(t)},[]);
   return <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm z-50 shadow-lg">{msg}</div>;
 };
+
+const DesktopSidebar = ({active,onChange,user,unreads,onLogout,onAdminNav,onUnionInfo,onFirebase,onNotif}) => (
+  <div className="hidden md:flex flex-col w-60 bg-blue-800 min-h-screen fixed left-0 top-0 z-40 shadow-xl">
+    <div className="px-5 py-5 border-b border-blue-700">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+          <Icon name="shield" size={18} color="#1d4ed8"/>
+        </div>
+        <div className="min-w-0">
+          <p className="text-white font-bold text-xs leading-tight">西ノ島町職員組合</p>
+          <p className="text-blue-300 text-xs">組合員ポータル</p>
+        </div>
+      </div>
+    </div>
+    <div className="px-4 py-3 border-b border-blue-700">
+      <p className="text-white text-sm font-bold truncate">{user.name}</p>
+      <p className="text-blue-300 text-xs truncate">{user.dept}</p>
+      {user.role==='admin'&&<span className="tag bg-blue-600 text-white text-xs mt-1">管理者</span>}
+    </div>
+    <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      <p className="text-blue-400 text-xs font-bold px-2 mb-2">メインメニュー</p>
+      {[
+        {id:'home',icon:'home',label:'ホーム'},
+        {id:'board',icon:'board',label:'掲示板・お知らせ'},
+        {id:'survey',icon:'survey',label:'アンケート・投票'},
+        {id:'consult',icon:'consult',label:'相談'},
+        {id:'kyosai',icon:'kyosai',label:'自治労共済'},
+      ].map(({id,icon,label})=>{
+        const cnt=unreads[id]||0;
+        const isActive=active===id;
+        return(
+          <button key={id} onClick={()=>onChange(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${isActive?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
+            <Icon name={icon} size={18} color="currentColor"/>
+            <span className="text-sm flex-1">{label}</span>
+            {cnt>0&&<span className="badge bg-red-500 text-white">{cnt}</span>}
+          </button>
+        );
+      })}
+      {user.role==='admin'&&(<>
+        <p className="text-blue-400 text-xs font-bold px-2 mt-4 mb-2">管理者メニュー</p>
+        {[['consults','相談管理'],['surveys','アンケート管理'],['members','組合員管理'],['faqs','FAQ管理']].map(([id,label])=>(
+          <button key={id} onClick={()=>onAdminNav(id)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+            <Icon name="edit" size={16} color="currentColor"/>
+            <span className="text-sm">{label}</span>
+          </button>
+        ))}
+      </>)}
+      <p className="text-blue-400 text-xs font-bold px-2 mt-4 mb-2">組合情報</p>
+      <button onClick={onUnionInfo} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+        <Icon name="board" size={16} color="currentColor"/>
+        <span className="text-sm">役員・規約・活動記録</span>
+      </button>
+      {user.role==='admin'&&(<>
+        <button onClick={onFirebase} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+          <Icon name="lock" size={16} color="currentColor"/>
+          <span className="text-sm">Firebase設定</span>
+        </button>
+        <button onClick={onNotif} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+          <Icon name="bell" size={16} color="currentColor"/>
+          <span className="text-sm">メール通知設定</span>
+        </button>
+      </>)}
+    </nav>
+    <div className="px-4 py-4 border-t border-blue-700">
+      <button onClick={onLogout} className="w-full text-blue-300 text-xs py-2 hover:text-white transition-colors text-left">ログアウト</button>
+      <p className="text-blue-500 text-xs mt-1">ver 2.1.0</p>
+    </div>
+  </div>
+);
 
 const BottomNav = ({active,onChange,unreads}) => {
   const items=[{id:'home',label:'ホーム'},{id:'board',label:'掲示板'},{id:'survey',label:'アンケート'},{id:'consult',label:'相談'},{id:'menu',label:'メニュー'}];
@@ -379,7 +448,7 @@ const LoginScreen = ({onLogin}) => {
     <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-900 flex flex-col items-center justify-center p-6">
       <div className="mb-8 text-center">
         <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><Icon name="shield" size={32} color="#1d4ed8"/></div>
-        <h1 className="text-white text-xl font-bold">西ノ島町職員労働組合</h1>
+        <h1 className="text-white text-xl font-bold">西ノ島町職員組合</h1>
         <p className="text-blue-200 text-sm mt-1">組合員ポータル</p>
       </div>
       <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
@@ -1730,7 +1799,7 @@ const AdminCodeSetting = () => {
 
 const FirebaseSettings = ({onBack}) => {
   const saved=getFbConfig()||{};
-  const [cfg,setCfg]=useState({apiKey:saved.apiKey||'',authDomain:saved.authDomain||'',projectId:saved.projectId||''});
+  const [cfg,setCfg]=useState({apiKey:saved.apiKey||'',authDomain:saved.authDomain||'',projectId:saved.projectId||'',storageBucket:saved.storageBucket||''});
   const [saved2,setSaved2]=useState(false);
   const [hasCfg,setHasCfg]=useState(()=>!!getFbConfig());
   const save=()=>{
@@ -1755,7 +1824,7 @@ const FirebaseSettings = ({onBack}) => {
         </div>
         {saved2&&<div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-sm text-green-700 font-bold text-center">✓ 保存しました</div>}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
-          {[['apiKey','API Key'],['authDomain','Auth Domain (xxx.firebaseapp.com)'],['projectId','Project ID']].map(([k,l])=>(
+          {[['apiKey','API Key'],['authDomain','Auth Domain (xxx.firebaseapp.com)'],['projectId','Project ID'],['storageBucket','Storage Bucket (xxx.appspot.com)']].map(([k,l])=>(
             <div key={k} className="mb-3">
               <label className="text-xs font-bold text-gray-500 mb-1 block">{l}</label>
               <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={cfg[k]} onChange={e=>setCfg(c=>({...c,[k]:e.target.value}))} placeholder={l}/>
@@ -1892,7 +1961,7 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
           <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>
         <button className="w-full text-left px-4 py-3.5 flex items-center justify-between">
-          <div><p className="text-sm text-gray-700">西ノ島町職員労働組合</p><p className="text-xs text-gray-400 mt-0.5">📍 西ノ島町役場 書記局（2階）</p></div>
+          <div><p className="text-sm text-gray-700">西ノ島町職員組合</p><p className="text-xs text-gray-400 mt-0.5">📍 西ノ島町役場 書記局（2階）</p></div>
         </button>
       </div>
       {user.role!=='admin'&&(
@@ -2008,7 +2077,7 @@ const App = () => {
     const np={id:Date.now(),...form,authorName:user.name,publishedAt:new Date().toISOString().slice(0,10),readCount:0,totalCount:members.length,isRead:true};
     setPosts(ps=>[np,...ps]);setBoardView('list');showToast('記事を公開しました');
     if(notifOn('newPost')&&getEjsCfg().allEmail){
-      sendMail({type:'newPost',to:getEjsCfg().allEmail,subject:`【組合お知らせ】${form.title}`,body:`西ノ島町職員労働組合より新しいお知らせが届きました。\n\n${(CATEGORY_MAP[form.category]||{}).label}：${form.title}\n\n${form.body.slice(0,200)}\n\nポータルからご確認ください。`,senderName:`${user.name}（西ノ島町職員労働組合）`}).catch(e=>console.warn(e));
+      sendMail({type:'newPost',to:getEjsCfg().allEmail,subject:`【組合お知らせ】${form.title}`,body:`西ノ島町職員組合より新しいお知らせが届きました。\n\n${(CATEGORY_MAP[form.category]||{}).label}：${form.title}\n\n${form.body.slice(0,200)}\n\nポータルからご確認ください。`,senderName:`${user.name}（西ノ島町職員組合）`}).catch(e=>console.warn(e));
     }
   };
 
@@ -2025,7 +2094,7 @@ const App = () => {
       sendMail({type:'anonConsult',to:toAdmin,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が届いています。\n送信先：${(recipient&&recipient.name)||'未指定'}\nカテゴリ：${category}\n確認コード：${code}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面からご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
     }
     if(user&&user.email&&getEjsCfg().publicKey){
-      sendMail({type:'anonReply',to:user.email,subject:'【組合相談】確認コードのお知らせ',body:`匿名相談を受け付けました。\n\n確認コード：${code}\n\nポータルの「相談の返信を確認する」にこのコードを入力すると、対応状況と担当者からの返信を確認できます。\nコードは大切に保管してください。\n\n西ノ島町職員労働組合`,senderName:'西ノ島町職員労働組合（自動送信）'}).catch(e=>console.warn(e));
+      sendMail({type:'anonReply',to:user.email,subject:'【組合相談】確認コードのお知らせ',body:`匿名相談を受け付けました。\n\n確認コード：${code}\n\nポータルの「相談の返信を確認する」にこのコードを入力すると、対応状況と担当者からの返信を確認できます。\nコードは大切に保管してください。\n\n西ノ島町職員組合`,senderName:'西ノ島町職員組合（自動送信）'}).catch(e=>console.warn(e));
     }
   };
 
@@ -2084,10 +2153,25 @@ const App = () => {
   };
 
   const showNav=!subScreen;
+  const changeTab=(t)=>{setTab(t);setBoardView('list');setSurveyView('list');setConsultView('top');};
   return (
-    <div className="max-w-[480px] mx-auto min-h-screen bg-gray-50">
-      {renderContent()}
-      {showNav&&<BottomNav active={tab} onChange={t=>{setTab(t);setBoardView('list');setSurveyView('list');setConsultView('top');}} unreads={unreads}/>}
+    <div className="bg-gray-50 min-h-screen">
+      {/* デスクトップサイドバー */}
+      <DesktopSidebar active={tab} onChange={changeTab} user={user} unreads={unreads}
+        onLogout={()=>{setUser(null);setTab('home');}}
+        onAdminNav={id=>setSubScreen('admin_'+id)}
+        onUnionInfo={()=>setSubScreen('union_info')}
+        onFirebase={()=>setSubScreen('firebase')}
+        onNotif={()=>setSubScreen('notif')}
+      />
+      {/* コンテンツエリア */}
+      <div className="md:ml-60">
+        <div className="max-w-[480px] mx-auto md:max-w-2xl min-h-screen bg-gray-50">
+          {renderContent()}
+        </div>
+      </div>
+      {/* モバイル用ボトムナビ */}
+      {showNav&&<div className="md:hidden"><BottomNav active={tab} onChange={changeTab} unreads={unreads}/></div>}
       {adminSetupPrompt&&(
         <AdminPromoteModal
           user={user}
