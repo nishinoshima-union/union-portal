@@ -1711,6 +1711,39 @@ const AdminCodeSetting = () => {
   );
 };
 
+const UploadToFirestoreButton = () => {
+  const [status,setStatus]=useState('idle'); // idle|loading|done|error
+  const handleUpload=async()=>{
+    const fs=getFs();
+    if(!fs){setStatus('error');return;}
+    setStatus('loading');
+    const keys=['union_posts','union_surveys','union_consults','union_members','union_faqs','union_officers','union_activities'];
+    try{
+      for(const key of keys){
+        const raw=localStorage.getItem(key);
+        if(raw){
+          const data=JSON.parse(raw);
+          await fs.collection('union').doc(key).set({d:data});
+        }
+      }
+      const rules=localStorage.getItem('union_rules');
+      if(rules)await fs.collection('union').doc('union_rules').set({d:rules});
+      setStatus('done');
+    }catch(e){
+      console.error(e);
+      setStatus('error');
+    }
+  };
+  if(status==='done')return <p className="text-xs text-green-600 font-bold text-center py-2">✓ アップロード完了！全デバイスで同期されます</p>;
+  if(status==='error')return <p className="text-xs text-red-500 text-center py-2">エラー：Firestoreの設定を確認してください（ルール・有効化）</p>;
+  return(
+    <button onClick={handleUpload} disabled={status==='loading'} className={`w-full rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2 ${status==='loading'?'bg-gray-200 text-gray-400':'bg-blue-600 text-white'}`}>
+      {status==='loading'?'アップロード中...':'☁️ Firestoreに今すぐアップロード'}
+    </button>
+  );
+};
+
+
 const FirebaseSettings = ({onBack}) => {
   const saved=getFbConfig()||{};
   const [cfg,setCfg]=useState({apiKey:saved.apiKey||'',authDomain:saved.authDomain||'',projectId:saved.projectId||''});
@@ -1748,9 +1781,14 @@ const FirebaseSettings = ({onBack}) => {
         </div>
         {hasCfg&&(
           <div>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
+              <p className="text-xs font-bold text-blue-700 mb-1">① ローカルデータをFirestoreにアップロード</p>
+              <p className="text-xs text-blue-600 mb-3">このデバイスのデータ（掲示板・組合員・アンケート等）をクラウドに保存します。初回のみ実行してください。</p>
+              <UploadToFirestoreButton/>
+            </div>
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
-              <p className="text-xs font-bold text-green-700 mb-1">✓ 設定済み — 全組合員に配布する手順</p>
-              <p className="text-xs text-green-600 mb-3">下のボタンで設定済みHTMLをダウンロードし、GitHub Pagesに上書きアップロードしてください。以降は全デバイスで設定不要になります。</p>
+              <p className="text-xs font-bold text-green-700 mb-1">② 設定済みHTMLをダウンロードして配布</p>
+              <p className="text-xs text-green-600 mb-3">Firebase設定を埋め込んだHTMLをダウンロードし、GitHub Pagesに上書きアップロードしてください。以降は全デバイスで設定不要になります。</p>
               <button onClick={()=>{
                 const cfg=getFbConfig();
                 if(!cfg)return;
