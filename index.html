@@ -7,13 +7,7 @@
 <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
 <script crossorigin src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
-<script>
-window.addEventListener('error', function(e) {
-  document.getElementById('root').innerHTML =
-    '<div style="padding:20px;color:red;background:#fff;font-family:monospace;white-space:pre-wrap;font-size:13px">' +
-    '<b>エラーが発生しました:</b><br>' + e.message + '<br><br>' + (e.error ? e.error.stack : '') + '</div>';
-});
-</script>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
