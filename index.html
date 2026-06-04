@@ -309,8 +309,23 @@ const LoginScreen = ({onLogin}) => {
     if(fbAuth){
       try{
         await fbAuth.signInWithEmailAndPassword(email,pw);
-        const mems=getMembers(SAMPLE_MEMBERS);
-        const profile=mems.find(m=>m.email===email);
+        // まずローカルのメンバーリストで検索
+        let mems=getMembers(SAMPLE_MEMBERS);
+        let profile=mems.find(m=>m.email===email);
+        // ローカルになければFirestoreから直接取得
+        if(!profile){
+          try{
+            const fs=getFs();
+            if(fs){
+              const snap=await fs.collection('union').doc('union_members').get();
+              if(snap.exists&&snap.data().d){
+                mems=snap.data().d;
+                profile=mems.find(m=>m.email===email);
+                if(mems.length>0)localStorage.setItem('union_members',JSON.stringify(mems));
+              }
+            }
+          }catch(e){}
+        }
         if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
         else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
         onLogin({email,name:(profile&&profile.name)||email.split('@')[0],dept:(profile&&profile.dept)||'',role:(profile&&profile.role)||'member'});
@@ -1952,6 +1967,34 @@ const App = () => {
   const showToast=msg=>setToast(msg);
   const clearSub=()=>setSubScreen(null);
 
+  // ─── スマホ戻るボタン対応 ────────────────────────────────────────────────
+  const navStateRef=useRef({});
+  useEffect(()=>{
+    navStateRef.current={subScreen,boardView,surveyView,consultView,tab};
+  },[subScreen,boardView,surveyView,consultView,tab]);
+
+  // 深い画面に遷移したらhistoryエントリを積む
+  useEffect(()=>{
+    const {subScreen:s,boardView:bv,surveyView:sv,consultView:cv}=navStateRef.current;
+    const isDeep=s||bv!=='list'||sv!=='list'||cv!=='top';
+    if(isDeep)window.history.pushState({appNav:1},'');
+  },[subScreen,boardView,surveyView,consultView]);
+
+  // 戻るボタンでアプリ内ナビゲーション
+  useEffect(()=>{
+    window.history.pushState({appNav:1},''); // 初期エントリ
+    const handlePop=()=>{
+      const {subScreen:s,boardView:bv,surveyView:sv,consultView:cv}=navStateRef.current;
+      if(s){setSubScreen(null);}
+      else if(bv!=='list'){setBoardView('list');setSelectedPost(null);}
+      else if(sv!=='list'){setSurveyView('list');setSelectedSurvey(null);}
+      else if(cv!=='top'){setConsultView('top');}
+      else{window.history.pushState({appNav:1},'');} // ルート→アプリを閉じない
+    };
+    window.addEventListener('popstate',handlePop);
+    return()=>window.removeEventListener('popstate',handlePop);
+  },[]);
+
   const handleNav=(t,item=null)=>{
     setTab(t);setSubScreen(null);
     if(t==='board'){setBoardView(item?'detail':'list');setSelectedPost(item);}
@@ -1992,6 +2035,18 @@ const App = () => {
       sendMail({type:'reservation',to:getEjsCfg().adminEmail,subject:'【要確認】相談予約が届きました',body:`相談予約が1件届いています。\n方法：${form.type==='face'?'対面':'電話'}\n希望日時：${form.date} ${form.time}\n概要：${form.topic||'未記入'}`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
     }
   };
+
+  // membersデータが同期されたとき、ログイン中ユーザーの名前・役割を補正
+  useEffect(()=>{
+    if(!user||!members||members.length===0)return;
+    const profile=members.find(m=>m.email===user.email);
+    if(!profile)return;
+    const needsUpdate=
+      (user.name!==profile.name)||
+      (user.role!==profile.role)||
+      (user.dept!==profile.dept);
+    if(needsUpdate)setUser(u=>({...u,name:profile.name,dept:profile.dept,role:profile.role}));
+  },[members]);
 
   const unreads={board:posts.filter(p=>!p.isRead).length,survey:surveys.filter(s=>s.status==='active'&&!s.isAnswered).length};
   const handleUserLogin=(u)=>setUser(u);
