@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>西ノ島町職員労働組合 組合員ポータル</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.9/babel.min.js"></script>
 <script>
 window.addEventListener('error', function(e) {
   document.getElementById('root').innerHTML =
@@ -16,9 +16,9 @@ window.addEventListener('error', function(e) {
 </script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <style>
 * { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:10px;font-size:11px;font-weight:700;padding:0 5px}
@@ -37,7 +37,7 @@ textarea:focus,input:focus,select:focus{outline:2px solid #2E74B5;outline-offset
 </head>
 <body class="bg-gray-50">
 <div id="root"></div>
-<script type="text/babel">
+<script type="text/babel" data-presets="env,react">
 const { useState, useEffect, useRef } = React;
 
 function loadData(key,fallback){try{const r=localStorage.getItem(key);return r?JSON.parse(r):fallback;}catch{return fallback;}}
@@ -1991,6 +1991,33 @@ const App = () => {
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+<script>
+// 診断: CDNスクリプトの読み込み確認
+(function() {
+  var checks = [
+    ['React', typeof React],
+    ['ReactDOM', typeof ReactDOM],
+    ['Babel', typeof Babel],
+    ['Firebase', typeof firebase]
+  ];
+  var missing = checks.filter(function(c){return c[1]==='undefined';}).map(function(c){return c[0];});
+  
+  // 2秒後にrootが空だったら診断結果を表示
+  setTimeout(function() {
+    var root = document.getElementById('root');
+    if (!root || root.innerHTML.trim() === '') {
+      var msg = missing.length > 0
+        ? 'CDN未読み込み: ' + missing.join(', ')
+        : '全CDN読み込み済み → Babel解析エラーの可能性';
+      root.innerHTML = '<div style="padding:20px;background:white;color:red;font-family:monospace">' +
+        '<b>ページが表示されませんでした</b><br><br>' + msg + '<br><br>' +
+        checks.map(function(c){return c[0]+': '+(c[1]==='undefined'?'❌ 未読み込み':'✓ OK');}).join('<br>') +
+        '</div>';
+    }
+  }, 3000);
+})();
 </script>
 </body>
 </html>
