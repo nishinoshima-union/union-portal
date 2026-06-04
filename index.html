@@ -492,7 +492,7 @@ const LoginScreen = ({onLogin}) => {
 
 const Dashboard = ({posts,surveys,onNav,user}) => {
   const unreads=posts.filter(p=>!p.isRead);
-  const activeSurveys=surveys.filter(s=>s.status==='active'&&!s.isAnswered);
+  const activeSurveys=surveys.filter(s=>s.status==='active'&&!isSurveyAnswered(s,user&&user.email));
   return(
     <div className="fade-in pb-24">
       <div className="bg-blue-700 px-4 md:px-8 pt-10 md:pt-14 pb-6 md:pb-10">
@@ -748,7 +748,7 @@ const PostForm = ({onBack,onSubmit}) => {
   );
 };
 
-const SurveyList = ({surveys,onSelect,isAdmin,onNew}) => (
+const SurveyList = ({surveys,onSelect,isAdmin,onNew,userEmail}) => (
   <div className="fade-in pb-24">
     <Header title="アンケート・投票" right={isAdmin&&<button onClick={onNew} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>作成</button>}/>
     <div className="px-4 md:px-8 pt-4">
@@ -764,7 +764,7 @@ const SurveyList = ({surveys,onSelect,isAdmin,onNew}) => (
                 <p className="text-xs text-gray-500 mt-1">{s.description}</p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <StatusBadge status={s.status}/>
-                  {s.isAnswered&&<span className="tag bg-green-100 text-green-700">回答済</span>}
+                  {isSurveyAnswered(s,userEmail)&&<span className="tag bg-green-100 text-green-700">回答済</span>}
                   {qCount>0&&<span className="tag bg-gray-100 text-gray-500">{qCount}問</span>}
                   <span className="text-xs text-gray-400">期限 {s.endAt}</span>
                 </div>
@@ -880,6 +880,11 @@ const SurveyAnswer = ({survey,onBack,onSubmit}) => {
 };
 
 const emptyQuestion=()=>({id:Date.now()+Math.random(),text:'',type:'single',options:['','']});
+// アンケート回答済み判定（ユーザー単位）
+const isSurveyAnswered=(s,userEmail)=>{
+  if(!userEmail)return s.isAnswered||false;
+  return (s.answers||[]).some(a=>a.userEmail===userEmail);
+};
 
 const SurveyCreate = ({onBack,onSubmit,totalMembers}) => {
   const [draft,setDraft]=useState({title:'',description:'',endAt:'',questions:[emptyQuestion()]});
@@ -2033,7 +2038,7 @@ const NotificationSettings = ({onBack}) => {
         </div>
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
           <p className="text-xs font-bold text-gray-500 mb-3">EmailJS 設定</p>
-          {[['publicKey','Public Key'],['serviceId','Service ID'],['templateId','Template ID'],['adminEmail','管理者メール（相談通知先）'],['allEmail','全員メール（お知らせ通知先）']].map(([k,l])=>(
+          {[['publicKey','Public Key'],['serviceId','Service ID'],['templateId','Template ID'],['adminEmail','管理者メール（相談通知先）'],['allEmail','全員メール（Googleグループ等のアドレス推奨）']].map(([k,l])=>(
             <div key={k} className="mb-3">
               <label className="text-xs text-gray-500 mb-1 block">{l}</label>
               <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={cfg[k]} onChange={e=>setCfg(c=>({...c,[k]:e.target.value}))}/>
@@ -2231,8 +2236,21 @@ const App = () => {
   const addPost=async(form)=>{
     const np={id:Date.now(),...form,authorName:user.name,publishedAt:new Date().toISOString().slice(0,10),readCount:0,totalCount:members.length,isRead:true};
     setPosts(ps=>[np,...ps]);setBoardView('list');showToast('記事を公開しました');
-    if(notifOn('newPost')&&getEjsCfg().allEmail){
-      sendMail({type:'newPost',to:getEjsCfg().allEmail,subject:`【組合お知らせ】${form.title}`,body:`西ノ島町職員組合より新しいお知らせが届きました。\n\n${(CATEGORY_MAP[form.category]||{}).label}：${form.title}\n\n${form.body.slice(0,200)}\n\nポータルからご確認ください。`,senderName:`${user.name}（西ノ島町職員組合）`}).catch(e=>console.warn(e));
+    if(notifOn('newPost')){
+      const ejsCfg=getEjsCfg();
+      if(ejsCfg.allEmail&&ejsCfg.publicKey&&ejsCfg.serviceId&&ejsCfg.templateId){
+        const subj='【組合お知らせ】'+form.title;
+        const bd='西ノ島町職員組合より新しいお知らせが届きました。
+
+'+(CATEGORY_MAP[form.category]||{}).label+'：'+form.title+'
+
+'+form.body.slice(0,200)+'
+
+ポータルからご確認ください。';
+        sendMail({type:'newPost',to:ejsCfg.allEmail,subject:subj,body:bd,senderName:user.name+'（西ノ島町職員組合）'})
+          .then(r=>{if(!r.skipped)showToast('メール通知を送信しました');})
+          .catch(e=>showToast('メール送信エラー: '+e.message));
+      }
     }
   };
 
@@ -2282,7 +2300,7 @@ const App = () => {
     if(needsUpdate)setUser(u=>({...u,name:profile.name,dept:profile.dept,role:profile.role}));
   },[members]);
 
-  const unreads={board:posts.filter(p=>!p.isRead).length,survey:surveys.filter(s=>s.status==='active'&&!s.isAnswered).length};
+  const unreads={board:posts.filter(p=>!p.isRead).length,survey:surveys.filter(s=>s.status==='active'&&!isSurveyAnswered(s,user&&user.email)).length};
   const handleUserLogin=(u)=>{
     setUser(u);
     // 名前がメールアドレス(@前)のままならプロフィール設定を促す
@@ -2309,8 +2327,8 @@ const App = () => {
     }
     if(tab==='survey'){
       if(surveyView==='new')return <SurveyCreate onBack={()=>setSurveyView('list')} totalMembers={members.length} onSubmit={(form)=>{const ns={id:Date.now(),...form,status:'active',isAnswered:false,answerCount:0,totalCount:members.length};setSurveys(ss=>[ns,...ss]);setSurveyView('list');showToast('アンケートを公開しました');}}/>;
-      if(surveyView==='answer'&&selectedSurvey&&!selectedSurvey.isAnswered)return <SurveyAnswer survey={selectedSurvey} onBack={()=>setSurveyView('list')} onSubmit={submitSurvey}/>;
-      return <SurveyList surveys={surveys} onSelect={s=>{setSelectedSurvey(s);setSurveyView('answer');}} isAdmin={user.role==='admin'} onNew={()=>setSurveyView('new')}/>;
+      if(surveyView==='answer'&&selectedSurvey&&!isSurveyAnswered(selectedSurvey,user&&user.email))return <SurveyAnswer survey={selectedSurvey} onBack={()=>setSurveyView('list')} onSubmit={submitSurvey}/>;
+      return <SurveyList surveys={surveys} onSelect={s=>{setSelectedSurvey(s);setSurveyView('answer');}} isAdmin={user.role==='admin'} onNew={()=>setSurveyView('new')} userEmail={user.email}/>;
     }
     if(tab==='consult'){
       if(consultView==='anon')return <AnonConsult onBack={()=>setConsultView('top')} onSubmit={handleAnonSubmit} officers={officers}/>;
