@@ -9,6 +9,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 * { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:10px;font-size:11px;font-weight:700;padding:0 5px}
@@ -35,6 +37,14 @@ function loadData(key, fallback) {
   try { const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; } catch{ return fallback; }
 }
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+// ─── FIREBASE HELPERS ────────────────────────────────────────────────────────
+function getFbConfig(){try{return JSON.parse(localStorage.getItem('fb_config')||'null');}catch{return null;}}
+function initFb(){
+  const cfg=getFbConfig();if(!cfg)return null;
+  if(!firebase.apps.length)firebase.initializeApp(cfg);
+  return firebase.auth();
+}
 
 // ─── EMAILJS ─────────────────────────────────────────────────────────────────
 function getEjsCfg(){return{publicKey:localStorage.getItem('ejs_pubkey')||'',serviceId:localStorage.getItem('ejs_service')||'',templateId:localStorage.getItem('ejs_template')||'',adminEmail:localStorage.getItem('ejs_admin_email')||'',allEmail:localStorage.getItem('ejs_all_email')||''}}
@@ -172,16 +182,25 @@ const LoginScreen = ({onLogin}) => {
     {email:'member@union.jp',password:'member123',name:'山本 花子',dept:'住民課',role:'member'},
   ];
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    setErr('');
+    const fbAuth=initFb();
+    if(fbAuth){
+      try{
+        await fbAuth.signInWithEmailAndPassword(email,pw);
+        const mems=loadData('union_members',SAMPLE_MEMBERS);
+        const profile=mems.find(m=>m.email===email);
+        if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
+        else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
+        onLogin({email,name:profile?.name||email.split('@')[0],dept:profile?.dept||'',role:profile?.role||'member'});
+      }catch(e){setErr('メールアドレスまたはパスワードが正しくありません');}
+      return;
+    }
+    // Firebase未設定時はデモアカウント
     const found=ACCOUNTS.find(a=>a.email===email&&a.password===pw);
     if(!found){setErr('メールアドレスまたはパスワードが正しくありません');return;}
-    if(rememberMe){
-      localStorage.setItem('saved_email',email);
-      localStorage.setItem('saved_pw',pw);
-    } else {
-      localStorage.removeItem('saved_email');
-      localStorage.removeItem('saved_pw');
-    }
+    if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
+    else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
     onLogin(found);
   };
 
@@ -214,9 +233,7 @@ const LoginScreen = ({onLogin}) => {
         </label>
         <button onClick={handleLogin} className="w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm hover:bg-blue-800 active:scale-95 transition-all">ログイン</button>
         <div className="mt-4 p-3 bg-gray-50 rounded-xl">
-          <p className="text-xs text-gray-400 font-bold mb-1">デモアカウント</p>
-          <p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p>
-          <p className="text-xs text-gray-500">組合員: member@union.jp / member123</p>
+          {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">Firebaseに登録したメール・パスワードでログインしてください</p></>):(<><p className="text-xs text-gray-400 font-bold mb-1">デモアカウント（Firebase未設定時）</p><p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-500">組合員: member@union.jp / member123</p></>)}
         </div>
       </div>
     </div>
@@ -995,6 +1012,45 @@ const AdminFAQs = ({onBack,faqs,setFaqs,showToast}) => {
   );
 };
 
+// ─── FIREBASE SETTINGS ──────────────────────────────────────────────────────
+const FirebaseSettings = ({onBack}) => {
+  const saved=getFbConfig()||{};
+  const [cfg,setCfg]=useState({apiKey:saved.apiKey||'',authDomain:saved.authDomain||'',projectId:saved.projectId||''});
+  const [saved2,setSaved2]=useState(false);
+  const save=()=>{
+    if(!cfg.apiKey||!cfg.authDomain||!cfg.projectId)return;
+    localStorage.setItem('fb_config',JSON.stringify(cfg));
+    setSaved2(true);setTimeout(onBack,1500);
+  };
+  const clear=()=>{localStorage.removeItem('fb_config');setCfg({apiKey:'',authDomain:'',projectId:''});};
+  return(
+    <div className="fade-in pb-24">
+      <Header title="Firebase ログイン設定" onBack={onBack}/>
+      <div className="px-4 pt-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-xs text-blue-700">
+          <p className="font-bold mb-1">設定手順</p>
+          <p>1. <strong>console.firebase.google.com</strong> にアクセス</p>
+          <p>2. プロジェクト作成 → Authentication → Email/Password を有効化</p>
+          <p>3. Authentication → Users から組合員のアカウントを追加</p>
+          <p>4. プロジェクト設定 → ウェブアプリ → 設定値をここに入力</p>
+          <p className="mt-1 text-blue-500">※ 組合員管理画面のメールアドレスと一致させてください</p>
+        </div>
+        {saved2&&<div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-sm text-green-700 font-bold text-center">✓ 保存しました</div>}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+          {[['apiKey','API Key'],['authDomain','Auth Domain (xxx.firebaseapp.com)'],['projectId','Project ID']].map(([k,l])=>(
+            <div key={k} className="mb-3">
+              <label className="text-xs font-bold text-gray-500 mb-1 block">{l}</label>
+              <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={cfg[k]} onChange={e=>setCfg(c=>({...c,[k]:e.target.value}))} placeholder={l}/>
+            </div>
+          ))}
+          <button onClick={save} className={`w-full rounded-xl py-3 font-bold text-sm ${cfg.apiKey&&cfg.authDomain&&cfg.projectId?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>保存する</button>
+        </div>
+        {getFbConfig()&&<button onClick={clear} className="w-full border border-red-200 text-red-500 py-3 rounded-xl text-sm">Firebase設定をクリア（デモモードに戻す）</button>}
+      </div>
+    </div>
+  );
+};
+
 // ─── MENU / SETTINGS ─────────────────────────────────────────────────────────
 const NotificationSettings = ({onBack}) => {
   const [cfg,setCfg]=useState({publicKey:localStorage.getItem('ejs_pubkey')||'',serviceId:localStorage.getItem('ejs_service')||'',templateId:localStorage.getItem('ejs_template')||'',adminEmail:localStorage.getItem('ejs_admin_email')||'',allEmail:localStorage.getItem('ejs_all_email')||''});
@@ -1038,7 +1094,7 @@ const NotificationSettings = ({onBack}) => {
   );
 };
 
-const MenuScreen = ({user,onLogout,onNotifSettings,onAdminNav}) => (
+const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav}) => (
   <div className="fade-in pb-24">
     <Header title="メニュー"/>
     <div className="px-4 pt-4">
@@ -1067,6 +1123,13 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onAdminNav}) => (
       )}
       <p className="text-xs font-bold text-gray-400 mb-2 px-1">アカウント・設定</p>
       <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
+        <button onClick={onFirebaseSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-700">Firebaseログイン設定</p>
+            <p className="text-xs text-gray-400 mt-0.5">{getFbConfig()?'✓ Firebase認証 有効':'デモモード（未設定）'}</p>
+          </div>
+          <Icon name="chevron" size={16} color="#9ca3af"/>
+        </button>
         <button onClick={onNotifSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-700">メール通知設定</p>
@@ -1163,6 +1226,7 @@ const App = () => {
 
   const renderContent=()=>{
     if(subScreen==='notif')return <NotificationSettings onBack={clearSub}/>;
+    if(subScreen==='firebase')return <FirebaseSettings onBack={clearSub}/>;
     if(subScreen==='admin_consults')return <AdminConsults onBack={clearSub} consults={consults} setConsults={setConsults}/>;
     if(subScreen==='admin_surveys')return <AdminSurveys onBack={clearSub} surveys={surveys} setSurveys={setSurveys} showToast={showToast}/>;
     if(subScreen==='admin_members')return <AdminMembers onBack={clearSub} members={members} setMembers={setMembers} showToast={showToast}/>;
@@ -1184,7 +1248,7 @@ const App = () => {
       if(consultView==='reserve')return <ReserveScreen onBack={()=>setConsultView('top')} onSubmit={handleReserveSubmit}/>;
       return <ConsultTop onSelect={v=>setConsultView(v)}/>;
     }
-    if(tab==='menu')return <MenuScreen user={user} onLogout={()=>{setUser(null);setTab('home');}} onNotifSettings={()=>setSubScreen('notif')} onAdminNav={id=>setSubScreen('admin_'+id)}/>;
+    if(tab==='menu')return <MenuScreen user={user} onLogout={()=>{setUser(null);setTab('home');}} onNotifSettings={()=>setSubScreen('notif')} onFirebaseSettings={()=>setSubScreen('firebase')} onAdminNav={id=>setSubScreen('admin_'+id)}/>;
     return null;
   };
 
