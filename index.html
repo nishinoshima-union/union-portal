@@ -1320,11 +1320,138 @@ const AdminConsults = ({onBack,consults,setConsults,user}) => {
   );
 };
 
+const SurveyResultsPanel = ({s, onBack}) => {
+  const [resultTab,setResultTab]=useState('summary');
+  const qs=s.questions&&s.questions.length>0?s.questions:[{id:'q0',text:s.title,type:s.type||'single',options:s.options||[]}];
+  const answers=s.answers||[];
+
+  const exportCsv=()=>{
+    const headers=['氏名','所属','回答日',...qs.map((q,i)=>'Q'+(i+1)+': '+q.text)];
+    const rows=answers.map(a=>{
+      const row=[a.userName||'',a.userDept||'',a.date||''];
+      qs.forEach(q=>{
+        const r=(a.responses||{})[q.id]||{};
+        if(q.type==='single'){row.push(r.selected!=null?(q.options||[])[r.selected]||'':'未回答');}
+        else if(q.type==='multi'){row.push(((r.multiSel||[]).map(i=>(q.options||[])[i])).join('/'));}
+        else if(q.type==='rating'){row.push(r.rating||'');}
+        else{row.push((r.text||'').split('\n').join(' '));}
+      });
+      return row;
+    });
+    const csv=[headers,...rows].map(r=>r.map(c=>'"'+String(c||'').split('"').join('""')+'"').join(',')).join(String.fromCharCode(10));
+    const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=s.title+'_回答結果.csv';
+    a.click();
+  };
+
+  const calcSummary=(q)=>{
+    if(q.type==='single'||q.type==='multi'){
+      const counts=(q.options||[]).map((_,i)=>{
+        if(q.type==='single')return answers.filter(a=>((a.responses||{})[q.id]||{}).selected===i).length;
+        return answers.filter(a=>(((a.responses||{})[q.id]||{}).multiSel||[]).includes(i)).length;
+      });
+      const total=answers.filter(a=>{const r=((a.responses||{})[q.id]||{});return q.type==='single'?r.selected!=null:(r.multiSel||[]).length>0;}).length||1;
+      return counts.map((c,i)=>({label:(q.options||[])[i],count:c,pct:Math.round(c/total*100)}));
+    }
+    if(q.type==='rating'){
+      const vals=answers.map(a=>((a.responses||{})[q.id]||{}).rating||0).filter(v=>v>0);
+      const avg=vals.length?Math.round(vals.reduce((sum,v)=>sum+v,0)/vals.length*10)/10:0;
+      return {avg,count:vals.length};
+    }
+    return null;
+  };
+
+  return(
+    <div className="fade-in pb-24">
+      <Header title="アンケート結果" onBack={onBack} right={
+        <button onClick={exportCsv} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
+          <Icon name="board" size={13} color="white"/>CSV出力
+        </button>
+      }/>
+      <div className="px-4 pt-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+          <h2 className="font-bold text-gray-900 mb-1">{s.title}</h2>
+          <p className="text-xs text-gray-500">回答数: {answers.length}人 / {s.totalCount}人（{s.totalCount>0?Math.round(answers.length/s.totalCount*100):0}%）</p>
+        </div>
+        <div className="flex bg-white rounded-xl border border-gray-100 mb-4 overflow-hidden">
+          {[['summary','集計結果'],['detail','回答者一覧']].map(([id,label])=>(
+            <button key={id} onClick={()=>setResultTab(id)} className={'flex-1 py-2.5 text-xs font-medium '+(resultTab===id?'bg-blue-700 text-white':'text-gray-500')}>{label}</button>
+          ))}
+        </div>
+        {resultTab==='summary'&&(
+          <div>
+            {qs.map((q,qi)=>{
+              const sum=calcSummary(q);
+              return(
+                <div key={String(q.id)} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-blue-700 text-white text-xs font-bold flex items-center justify-center">{qi+1}</span>
+                    <p className="text-sm font-bold text-gray-900 flex-1">{q.text}</p>
+                  </div>
+                  {(q.type==='single'||q.type==='multi')&&Array.isArray(sum)&&sum.map((item,i)=>(
+                    <div key={i} className="mb-2">
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>{item.label}</span><span className="font-bold">{item.count}人（{item.pct}%）</span>
+                      </div>
+                      <div className="bg-gray-100 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{width:item.pct+'%'}}/></div>
+                    </div>
+                  ))}
+                  {q.type==='rating'&&sum&&(
+                    <div className="text-center py-2">
+                      <p className="text-3xl font-bold text-yellow-500">{'★'.repeat(Math.round(sum.avg))}</p>
+                      <p className="text-sm font-bold text-gray-700 mt-1">平均 {sum.avg} / 5（{sum.count}人回答）</p>
+                    </div>
+                  )}
+                  {q.type==='text'&&(
+                    <div className="space-y-1.5">
+                      {answers.filter(a=>((a.responses||{})[q.id]||{}).text).map((a,i)=>(
+                        <div key={i} className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-700">
+                          <span className="font-bold text-gray-500 mr-2">{a.userName}</span>{((a.responses||{})[q.id]||{}).text}
+                        </div>
+                      ))}
+                      {answers.filter(a=>((a.responses||{})[q.id]||{}).text).length===0&&<p className="text-xs text-gray-400 italic">回答なし</p>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {resultTab==='detail'&&(
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            {answers.length===0?<p className="text-center py-8 text-gray-400 text-sm">まだ回答がありません</p>:
+            answers.map((a,i)=>(
+              <div key={i} className="px-4 py-3 border-b border-gray-100 last:border-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-bold text-gray-900">{a.userName||'不明'}</span>
+                  <span className="text-xs text-gray-500">{a.userDept}</span>
+                  <span className="text-xs text-gray-400 ml-auto">{a.date}</span>
+                </div>
+                {qs.map((q,qi)=>{
+                  const r=(a.responses||{})[q.id]||{};
+                  let ans='';
+                  if(q.type==='single')ans=r.selected!=null?(q.options||[])[r.selected]||'':'';
+                  else if(q.type==='multi')ans=((r.multiSel||[]).map(idx=>(q.options||[])[idx])).join('・');
+                  else if(q.type==='rating')ans=r.rating?'★'+r.rating:'';
+                  else ans=r.text||'';
+                  return ans?<p key={qi} className="text-xs text-gray-600 ml-1">Q{qi+1}: <span className="font-medium text-gray-800">{ans}</span></p>:null;
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
 const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
   const [showForm,setShowForm]=useState(false);
   const [draft,setDraft]=useState({title:'',description:'',endAt:'',questions:[emptyQuestion()]});
   const [viewResult,setViewResult]=useState(null);
-  const [resultTab,setResultTab]=useState('summary');
   const addQuestion=()=>setDraft(d=>({...d,questions:[...d.questions,emptyQuestion()]}));
   const removeQuestion=(qid)=>setDraft(d=>({...d,questions:d.questions.filter(q=>q.id!==qid)}));
   const updateQ=(qid,patch)=>setDraft(d=>({...d,questions:d.questions.map(q=>q.id===qid?{...q,...patch}:q)}));
@@ -1341,135 +1468,10 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
   };
   const toggleStatus=(id)=>setSurveys(ss=>ss.map(s=>s.id===id?{...s,status:s.status==='active'?'closed':'active'}:s));
   const deleteSurvey=(id)=>{if(confirm('削除しますか？'))setSurveys(ss=>ss.filter(s=>s.id!==id));};
-  // CSV出力
-  const exportCsv=(s)=>{
-    const qs=s.questions&&s.questions.length>0?s.questions:[{id:'q0',text:s.title,type:s.type||'single',options:s.options||[]}];
-    const answers=s.answers||[];
-    const headers=['氏名','所属','回答日',...qs.map((q,i)=>`Q${i+1}: ${q.text}`)];
-    const rows=answers.map(a=>{
-      const row=[a.userName||'',a.userDept||'',a.date||''];
-      qs.forEach(q=>{
-        const r=(a.responses||{})[q.id]||{};
-        if(q.type==='single'){row.push(r.selected!=null?(q.options||[])[r.selected]||'':'未回答');}
-        else if(q.type==='multi'){row.push(((r.multiSel||[]).map(i=>(q.options||[])[i])).join('/'));}
-        else if(q.type==='rating'){row.push(r.rating||'');}
-        else{row.push((r.text||'').split('\n').join(' '));}
-      });
-      return row;
-    });
-    const csv=[headers,...rows].map(r=>r.map(c=>'"'+String(c||'').split('"').join('""')+'"').join(',')).join(String.fromCharCode(10));
-    const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=`${s.title}_回答結果.csv`;
-    a.click();
-  };
-
   if(viewResult){
     const s=surveys.find(x=>x.id===viewResult);
     if(!s)return null;
-    const qs=s.questions&&s.questions.length>0?s.questions:[{id:'q0',text:s.title,type:s.type||'single',options:s.options||[]}];
-    const answers=s.answers||[];
-    // 集計
-    const calcSummary=(q)=>{
-      if(q.type==='single'||q.type==='multi'){
-        const counts=(q.options||[]).map((_,i)=>{
-          if(q.type==='single')return answers.filter(a=>((a.responses||{})[q.id]||{}).selected===i).length;
-          return answers.filter(a=>(((a.responses||{})[q.id]||{}).multiSel||[]).includes(i)).length;
-        });
-        const total=answers.filter(a=>{const r=((a.responses||{})[q.id]||{});return q.type==='single'?r.selected!=null:(r.multiSel||[]).length>0;}).length||1;
-        return counts.map((c,i)=>({label:(q.options||[])[i],count:c,pct:Math.round(c/total*100)}));
-      }
-      if(q.type==='rating'){
-        const vals=answers.map(a=>((a.responses||{})[q.id]||{}).rating||0).filter(v=>v>0);
-        const avg=vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10)/10:0;
-        return {avg,count:vals.length};
-      }
-      return null;
-    };
-
-    return(
-      <div className="fade-in pb-24">
-        <Header title="アンケート結果" onBack={()=>setViewResult(null)} right={
-          <button onClick={()=>exportCsv(s)} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
-            <Icon name="board" size={13} color="white"/>CSV出力
-          </button>
-        }/>
-        <div className="px-4 pt-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
-            <h2 className="font-bold text-gray-900 mb-1">{s.title}</h2>
-            <p className="text-xs text-gray-500">回答数: {answers.length}人 / {s.totalCount}人（{s.totalCount>0?Math.round(answers.length/s.totalCount*100):0}%）</p>
-          </div>
-
-          <div className="flex bg-white rounded-xl border border-gray-100 mb-4 overflow-hidden">
-            {[['summary','集計結果'],['detail','回答者一覧']].map(([id,label])=>(
-              <button key={id} onClick={()=>setResultTab(id)} className={`flex-1 py-2.5 text-xs font-medium ${resultTab===id?'bg-blue-700 text-white':'text-gray-500'}`}>{label}</button>
-            ))}
-          </div>
-
-          {resultTab==='summary'&&qs.map((q,qi)=>{
-            const sum=calcSummary(q);
-            return(
-              <div key={q.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-5 h-5 rounded-full bg-blue-700 text-white text-xs font-bold flex items-center justify-center">{qi+1}</span>
-                  <p className="text-sm font-bold text-gray-900 flex-1">{q.text}</p>
-                </div>
-                {(q.type==='single'||q.type==='multi')&&Array.isArray(sum)&&sum.map((item,i)=>(
-                  <div key={i} className="mb-2">
-                    <div className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>{item.label}</span>
-                      <span className="font-bold">{item.count}人（{item.pct}%）</span>
-                    </div>
-                    <div className="bg-gray-100 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full transition-all" style={{width:`${item.pct}%`}}/></div>
-                  </div>
-                ))}
-                {q.type==='rating'&&sum&&(
-                  <div className="text-center py-2">
-                    <p className="text-3xl font-bold text-yellow-500">{'★'.repeat(Math.round(sum.avg))}</p>
-                    <p className="text-sm font-bold text-gray-700 mt-1">平均 {sum.avg} / 5（{sum.count}人回答）</p>
-                  </div>
-                )}
-                {q.type==='text'&&(
-                  <div className="space-y-1.5">
-                    {answers.filter(a=>((a.responses||{})[q.id]||{}).text).map((a,i)=>(
-                      <div key={i} className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-700">
-                        <span className="font-bold text-gray-500 mr-2">{a.userName}</span>{((a.responses||{})[q.id]||{}).text}
-                      </div>
-                    ))}
-                    {answers.filter(a=>((a.responses||{})[q.id]||{}).text).length===0&&<p className="text-xs text-gray-400 italic">回答なし</p>}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {resultTab==='detail'&&(
-            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-              {answers.length===0?<p className="text-center py-8 text-gray-400 text-sm">まだ回答がありません</p>:
-              answers.map((a,i)=>(
-                <div key={i} className="px-4 py-3 border-b border-gray-100 last:border-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-900">{a.userName||'不明'}</span>
-                    <span className="text-xs text-gray-500">{a.userDept}</span>
-                    <span className="text-xs text-gray-400 ml-auto">{a.date}</span>
-                  </div>
-                  {qs.map((q,qi)=>{
-                    const r=(a.responses||{})[q.id]||{};
-                    let ans='';
-                    if(q.type==='single')ans=r.selected!=null?(q.options||[])[r.selected]||'':'';
-                    else if(q.type==='multi')ans=((r.multiSel||[]).map(idx=>(q.options||[])[idx])).join('・');
-                    else if(q.type==='rating')ans=r.rating?`★${r.rating}`:'';
-                    else ans=r.text||'';
-                    return ans?<p key={qi} className="text-xs text-gray-600 ml-1">Q{qi+1}: <span className="font-medium text-gray-800">{ans}</span></p>:null;
-                  })}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <SurveyResultsPanel key={String(viewResult)} s={s} onBack={()=>setViewResult(null)}/>;
   }
   return(
     <div className="fade-in pb-24">
