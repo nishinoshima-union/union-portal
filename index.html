@@ -37,7 +37,7 @@ textarea:focus,input:focus,select:focus{outline:2px solid #2E74B5;outline-offset
 </head>
 <body class="bg-gray-50">
 <div id="root"></div>
-<script type="text/babel" data-presets="env,react">
+<script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
 function loadData(key,fallback){try{const r=localStorage.getItem(key);return r?JSON.parse(r):fallback;}catch{return fallback;}}
@@ -337,12 +337,12 @@ const LoginScreen = ({onLogin}) => {
         const profile=mems.find(m=>m.email===email);
         if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
         else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
-        onLogin({email,name:profile?.name||email.split('@')[0],dept:profile?.dept||'',role:profile?.role||'member'});
+        onLogin({email,name:(profile&&profile.name)||email.split('@')[0],dept:(profile&&profile.dept)||'',role:(profile&&profile.role)||'member'});
       }catch(e){
-        const code=e?.code||'';
+        const code=(e&&e.code)||'';
         if(code==='auth/user-not-found'||code==='auth/wrong-password'||code==='auth/invalid-credential')setErr('メールアドレスまたはパスワードが正しくありません');
         else if(code==='auth/unauthorized-domain')setErr('このドメインはFirebaseに未登録です。FirebaseコンソールのAuthenticationで承認済みドメインに追加してください');
-        else setErr('ログインエラー: '+(code||e?.message||'不明'));
+        else setErr('ログインエラー: '+(code||(e&&e.message)||'不明'));
       }
       setLoading(false);return;
     }
@@ -369,9 +369,9 @@ const LoginScreen = ({onLogin}) => {
       setDone(true);
       setTimeout(()=>{onLogin({email,name,dept,role:'member'});},1500);
     }catch(e){
-      const code=e?.code||'';
+      const code=(e&&e.code)||'';
       if(code==='auth/email-already-in-use')setErr('このメールアドレスはすでに登録されています');
-      else setErr('登録エラー: '+(code||e?.message||'不明'));
+      else setErr('登録エラー: '+(code||(e&&e.message)||'不明'));
     }
     setLoading(false);
   };
@@ -439,8 +439,8 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
     <div className="fade-in pb-24">
       <div className="bg-blue-700 px-4 pt-10 pb-6">
         <p className="text-blue-200 text-xs mb-1">ようこそ</p>
-        <h1 className="text-white text-xl font-bold">{user?.name} さん</h1>
-        <p className="text-blue-200 text-xs mt-1">{user?.dept}</p>
+        <h1 className="text-white text-xl font-bold">{(user&&user.name)} さん</h1>
+        <p className="text-blue-200 text-xs mt-1">{(user&&user.dept)}</p>
       </div>
       <div className="px-4 pt-4">
         {unreads.length>0&&(
@@ -448,7 +448,7 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
             <span className="badge bg-red-500 text-white flex-shrink-0">{unreads.length}</span>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-red-700">未読のお知らせがあります</p>
-              <p className="text-xs text-red-500 truncate">{unreads[0]?.title}</p>
+              <p className="text-xs text-red-500 truncate">{(unreads[0]&&unreads[0].title)}</p>
             </div>
             <button onClick={()=>onNav('board')} className="text-xs text-red-600 font-bold flex-shrink-0">確認 →</button>
           </div>
@@ -458,7 +458,7 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
             <span className="badge bg-blue-600 text-white flex-shrink-0">{activeSurveys.length}</span>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-blue-700">回答待ちのアンケートがあります</p>
-              <p className="text-xs text-blue-500 truncate">{activeSurveys[0]?.title}</p>
+              <p className="text-xs text-blue-500 truncate">{(activeSurveys[0]&&activeSurveys[0].title)}</p>
             </div>
             <button onClick={()=>onNav('survey')} className="text-xs text-blue-600 font-bold flex-shrink-0">回答 →</button>
           </div>
@@ -636,7 +636,7 @@ const PostForm = ({onBack,onSubmit}) => {
             {hasStorage?(
               <div>
                 <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileSelect}/>
-                <button onClick={()=>fileInputRef.current?.click()} disabled={uploading} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2 mb-2">
+                <button onClick={()=>fileInputRef.current&&fileInputRef.current.click()} disabled={uploading} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2 mb-2">
                   <Icon name="plus" size={16} color="#2563eb"/>{uploading?'アップロード中...':'ファイルを選択（写真・PDF・Office）'}
                 </button>
                 {Object.entries(uploadProgress).map(([name,pct])=>(
@@ -974,7 +974,7 @@ const AnonConsult = ({onBack,onSubmit,officers}) => {
           <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><Icon name="check" size={32} color="#16a34a"/></div>
             <p className="font-bold text-gray-900 text-base mb-1">送信しました</p>
-            <p className="text-sm text-gray-500 mb-1"><span className="font-bold text-gray-700">{recipient?.name}</span> に送信されました</p>
+            <p className="text-sm text-gray-500 mb-1"><span className="font-bold text-gray-700">{(recipient&&recipient.name)}</span> に送信されました</p>
             <p className="text-xs text-gray-400 mb-6">本人以外は内容を閲覧できません</p>
             <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 mb-4">
               <p className="text-xs font-bold text-yellow-700 mb-2">⚠️ 必ず控えてください</p>
@@ -1038,7 +1038,7 @@ const AnonConsult = ({onBack,onSubmit,officers}) => {
         <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xs text-purple-500">送信先：</span>
-            <span className="text-xs font-bold text-purple-800">{recipient?.name}</span>
+            <span className="text-xs font-bold text-purple-800">{(recipient&&recipient.name)}</span>
             <button onClick={()=>setStep('recipient')} className="text-xs text-purple-500 underline ml-auto">変更</button>
           </div>
           <p className="text-xs text-purple-600 mt-1">この担当者のみ閲覧できます</p>
@@ -1147,7 +1147,7 @@ const AdminConsults = ({onBack,consults,setConsults,user}) => {
   const [note,setNote]=useState('');
   const [reply,setReply]=useState('');
   const [showAll,setShowAll]=useState(false);
-  const myConsults=consults.filter(c=>showAll||!c.recipientEmail||c.recipientEmail===(user?.email||''));
+  const myConsults=consults.filter(c=>showAll||!c.recipientEmail||c.recipientEmail===((user&&user.email)||''));
   const saveAndStatus=(id,status)=>{
     setConsults(cs=>cs.map(c=>c.id===id?{...c,status,adminNote:note||c.adminNote,adminReply:reply||c.adminReply}:c));
     setSelected(null);setNote('');setReply('');
@@ -1230,7 +1230,7 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
   const addQuestion=()=>setDraft(d=>({...d,questions:[...d.questions,emptyQuestion()]}));
   const removeQuestion=(qid)=>setDraft(d=>({...d,questions:d.questions.filter(q=>q.id!==qid)}));
   const updateQ=(qid,patch)=>setDraft(d=>({...d,questions:d.questions.map(q=>q.id===qid?{...q,...patch}:q)}));
-  const addOption=(qid)=>updateQ(qid,{options:[...(draft.questions.find(q=>q.id===qid)?.options||[]),'']});
+  const addOption=(qid)=>updateQ(qid,{options:[...(((draft.questions.find(q=>q.id===qid)||{}).options)||[]),'']});
   const updateOption=(qid,i,v)=>{const q=draft.questions.find(x=>x.id===qid);if(!q)return;updateQ(qid,{options:q.options.map((o,j)=>j===i?v:o)});};
   const removeOption=(qid,i)=>{const q=draft.questions.find(x=>x.id===qid);if(!q||q.options.length<=2)return;updateQ(qid,{options:q.options.filter((_,j)=>j!==i)});};
   const createSurvey=()=>{
@@ -1913,12 +1913,12 @@ const App = () => {
   };
 
   const handleAnonSubmit=(category,content,code,recipient)=>{
-    const nc={id:Date.now(),category,content,date:new Date().toISOString().slice(0,10),status:'未対応',confirmCode:code,recipientName:recipient?.name||'',recipientEmail:recipient?.email||'',adminNote:'',adminReply:''};
+    const nc={id:Date.now(),category,content,date:new Date().toISOString().slice(0,10),status:'未対応',confirmCode:code,recipientName:(recipient&&recipient.name)||'',recipientEmail:(recipient&&recipient.email)||'',adminNote:'',adminReply:''};
     setConsults(cs=>[nc,...cs]);
     setConsultView('top');
-    const toEmail=recipient?.email||getEjsCfg().adminEmail;
+    const toEmail=(recipient&&recipient.email)||getEjsCfg().adminEmail;
     if(notifOn('anonConsult')&&toEmail){
-      sendMail({type:'anonConsult',to:toEmail,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が1件届いています。\n送信先：${recipient?.name||'未指定'}\nカテゴリ：${category}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面からご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
+      sendMail({type:'anonConsult',to:toEmail,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が1件届いています。\n送信先：${(recipient&&recipient.name)||'未指定'}\nカテゴリ：${category}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面からご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
     }
   };
 
