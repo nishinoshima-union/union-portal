@@ -2153,7 +2153,15 @@ const App = () => {
   };
 
   const showNav=!subScreen;
-  const changeTab=(t)=>{setTab(t);setBoardView('list');setSurveyView('list');setConsultView('top');};
+  const changeTab=(t)=>{
+    // 自治労共済・組合情報はsubScreenで管理
+    if(t==='kyosai'){setSubScreen('kyosai');return;}
+    if(t==='union_info'){setSubScreen('union_info');return;}
+    // 通常タブ遷移：subScreenをクリアして切り替え
+    setSubScreen(null);
+    setTab(t);
+    setBoardView('list');setSurveyView('list');setConsultView('top');
+  };
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* デスクトップサイドバー */}
