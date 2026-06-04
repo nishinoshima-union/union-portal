@@ -1352,8 +1352,7 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
         if(q.type==='single'){row.push(r.selected!=null?(q.options||[])[r.selected]||'':'未回答');}
         else if(q.type==='multi'){row.push(((r.multiSel||[]).map(i=>(q.options||[])[i])).join('/'));}
         else if(q.type==='rating'){row.push(r.rating||'');}
-        else{row.push((r.text||'').replace(/
-/g,' '));}
+        else{row.push((r.text||'').split('\n').join(' '));}
       });
       return row;
     });
