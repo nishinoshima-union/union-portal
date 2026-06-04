@@ -369,7 +369,7 @@ const LoginScreen = ({onLogin}) => {
           </label>
           <button onClick={handleLogin} disabled={loading} className={`w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm transition-all ${loading?'opacity-60':''}`}>{loading?'ログイン中...':'ログイン'}</button>
           <div className="mt-4 p-3 bg-gray-50 rounded-xl">
-            {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p></>):(<><p className="text-xs text-gray-400 font-bold mb-1">デモアカウント</p><p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-500">組合員: member@union.jp / member123</p></>)}
+            {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">Firebaseに登録したメール・パスワードでログインしてください</p></>):(<><p className="text-xs text-orange-600 font-bold mb-1">⚠️ Firebase未設定（このブラウザ）</p><p className="text-xs text-gray-500 mb-1">初回はメニュー→「Firebaseログイン設定」から設定してください</p><p className="text-xs text-gray-400 font-bold mt-2 mb-0.5">デモアカウント（テスト用）</p><p className="text-xs text-gray-400">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-400">組合員: member@union.jp / member123</p></>)}
           </div>
         </>)}
         {mode==='register'&&(<>
@@ -937,6 +937,10 @@ const AnonConsult = ({onBack,onSubmit,officers}) => {
                 <p className="text-2xl font-bold text-gray-900 tracking-widest">{myCode}</p>
               </div>
               <button onClick={copyCode} className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${copied?'bg-green-500 text-white':'bg-yellow-400 text-yellow-900'}`}>{copied?'✓ コピーしました！':'確認コードをコピーする'}</button>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-3 text-xs text-green-700">
+              <p className="font-bold mb-0.5">📧 ログインメールアドレスに確認コードを送信しました</p>
+              <p>メールを確認してコードを保管してください（EmailJS未設定の場合は送信されません）</p>
             </div>
             <div className="bg-purple-50 rounded-xl p-3 text-xs text-purple-700 text-left mb-5">
               <p className="font-bold mb-1">📱 スクリーンショットもおすすめ</p>
@@ -1869,10 +1873,12 @@ const App = () => {
   const handleAnonSubmit=(category,content,code,recipient)=>{
     const nc={id:Date.now(),category,content,date:new Date().toISOString().slice(0,10),status:'未対応',confirmCode:code,recipientName:(recipient&&recipient.name)||'',recipientEmail:(recipient&&recipient.email)||'',adminNote:'',adminReply:''};
     setConsults(cs=>[nc,...cs]);
-    setConsultView('top');
-    const toEmail=(recipient&&recipient.email)||getEjsCfg().adminEmail;
-    if(notifOn('anonConsult')&&toEmail){
-      sendMail({type:'anonConsult',to:toEmail,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が1件届いています。\n送信先：${(recipient&&recipient.name)||'未指定'}\nカテゴリ：${category}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面からご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
+    const toAdmin=(recipient&&recipient.email)||getEjsCfg().adminEmail;
+    if(notifOn('anonConsult')&&toAdmin){
+      sendMail({type:'anonConsult',to:toAdmin,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が届いています。\n送信先：${(recipient&&recipient.name)||'未指定'}\nカテゴリ：${category}\n確認コード：${code}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面からご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
+    }
+    if(user&&user.email&&getEjsCfg().publicKey){
+      sendMail({type:'anonReply',to:user.email,subject:'【組合相談】確認コードのお知らせ',body:`匿名相談を受け付けました。\n\n確認コード：${code}\n\nポータルの「相談の返信を確認する」にこのコードを入力すると、対応状況と担当者からの返信を確認できます。\nコードは大切に保管してください。\n\n西ノ島町職員労働組合`,senderName:'西ノ島町職員労働組合（自動送信）'}).catch(e=>console.warn(e));
     }
   };
 
