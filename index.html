@@ -2240,13 +2240,7 @@ const App = () => {
       const ejsCfg=getEjsCfg();
       if(ejsCfg.allEmail&&ejsCfg.publicKey&&ejsCfg.serviceId&&ejsCfg.templateId){
         const subj='【組合お知らせ】'+form.title;
-        const bd='西ノ島町職員組合より新しいお知らせが届きました。
-
-'+(CATEGORY_MAP[form.category]||{}).label+'：'+form.title+'
-
-'+form.body.slice(0,200)+'
-
-ポータルからご確認ください。';
+        const bd='西ノ島町職員組合より新しいお知らせが届きました。\n\n'+(CATEGORY_MAP[form.category]||{}).label+'：'+form.title+'\n\n'+form.body.slice(0,200)+'\n\nポータルからご確認ください。';
         sendMail({type:'newPost',to:ejsCfg.allEmail,subject:subj,body:bd,senderName:user.name+'（西ノ島町職員組合）'})
           .then(r=>{if(!r.skipped)showToast('メール通知を送信しました');})
           .catch(e=>showToast('メール送信エラー: '+e.message));
