@@ -42,6 +42,7 @@ function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); 
 function getFbConfig(){try{return JSON.parse(localStorage.getItem('fb_config')||'null');}catch{return null;}}
 function initFb(){
   const cfg=getFbConfig();if(!cfg)return null;
+  if(typeof firebase==='undefined')throw new Error('Firebase SDK not loaded');
   if(!firebase.apps.length)firebase.initializeApp(cfg);
   return firebase.auth();
 }
@@ -184,7 +185,8 @@ const LoginScreen = ({onLogin}) => {
 
   const handleLogin = async () => {
     setErr('');
-    const fbAuth=initFb();
+    let fbAuth=null;
+    try{ fbAuth=initFb(); }catch(e){ fbAuth=null; }
     if(fbAuth){
       try{
         await fbAuth.signInWithEmailAndPassword(email,pw);
@@ -193,7 +195,14 @@ const LoginScreen = ({onLogin}) => {
         if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
         else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
         onLogin({email,name:profile?.name||email.split('@')[0],dept:profile?.dept||'',role:profile?.role||'member'});
-      }catch(e){setErr('メールアドレスまたはパスワードが正しくありません');}
+      }catch(e){
+        const code=e?.code||'';
+        if(code==='auth/user-not-found'||code==='auth/wrong-password'||code==='auth/invalid-credential')setErr('メールアドレスまたはパスワードが正しくありません');
+        else if(code==='auth/invalid-api-key'||code==='auth/invalid-app-argument')setErr('Firebase設定（API Key等）が正しくありません。メニュー→Firebase設定を確認してください');
+        else if(code==='auth/network-request-failed')setErr('ネットワークエラーです。接続を確認してください');
+        else if(code==='auth/unauthorized-domain')setErr('このドメインはFirebaseに未登録です。FirebaseコンソールのAuthenticationで承認済みドメインに追加してください');
+        else setErr('ログインエラー: '+( code||e?.message||'不明'));
+      }
       return;
     }
     // Firebase未設定時はデモアカウント
