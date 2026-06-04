@@ -43,7 +43,13 @@ const { useState, useEffect, useRef } = React;
 function loadData(key,fallback){try{const r=localStorage.getItem(key);return r?JSON.parse(r):fallback;}catch{return fallback;}}
 function saveData(key,data){localStorage.setItem(key,JSON.stringify(data));}
 
-function getFbConfig(){try{return JSON.parse(localStorage.getItem('fb_config')||'null');}catch{return null;}}
+// ★ 管理者はここに Firebase 設定を埋め込んでください（設定後HTMLをダウンロードしてGitHub Pagesに上書きアップ）
+const FIREBASE_CONFIG=null; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
+
+function getFbConfig(){
+  if(FIREBASE_CONFIG)return FIREBASE_CONFIG;
+  try{return JSON.parse(localStorage.getItem('fb_config')||'null');}catch{return null;}
+}
 function initFb(){
   const cfg=getFbConfig();if(!cfg)return null;
   if(typeof firebase==='undefined')throw new Error('Firebase SDK not loaded');
@@ -276,6 +282,7 @@ const LoginScreen = ({onLogin}) => {
   const [err,setErr]=useState('');
   const [loading,setLoading]=useState(false);
   const [done,setDone]=useState(false);
+  const [hasFbConfig]=useState(()=>!!getFbConfig());
   const ACCOUNTS=[
     {email:'admin@union.jp',password:'admin123',name:'田中 一郎',dept:'執行部（組合委員長）',role:'admin'},
     {email:'member@union.jp',password:'member123',name:'山本 花子',dept:'住民課',role:'member'},
@@ -369,7 +376,11 @@ const LoginScreen = ({onLogin}) => {
           </label>
           <button onClick={handleLogin} disabled={loading} className={`w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm transition-all ${loading?'opacity-60':''}`}>{loading?'ログイン中...':'ログイン'}</button>
           <div className="mt-4 p-3 bg-gray-50 rounded-xl">
-            {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">Firebaseに登録したメール・パスワードでログインしてください</p></>):(<><p className="text-xs text-orange-600 font-bold mb-1">⚠️ Firebase未設定（このブラウザ）</p><p className="text-xs text-gray-500 mb-1">初回はメニュー→「Firebaseログイン設定」から設定してください</p><p className="text-xs text-gray-400 font-bold mt-2 mb-0.5">デモアカウント（テスト用）</p><p className="text-xs text-gray-400">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-400">組合員: member@union.jp / member123</p></>)}
+            {hasFbConfig?(
+              <><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">登録済みのメール・パスワードでログインしてください</p></>
+            ):(
+              <><p className="text-xs text-gray-400 font-bold mb-0.5">デモアカウント（テスト用）</p><p className="text-xs text-gray-400">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-400">組合員: member@union.jp / member123</p></>
+            )}
           </div>
         </>)}
         {mode==='register'&&(<>
@@ -421,7 +432,7 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
           {[
             {id:'board',icon:'board',label:'掲示板・お知らせ',color:'bg-blue-50',iconColor:'#2563eb'},
             {id:'survey',icon:'survey',label:'アンケート・投票',color:'bg-green-50',iconColor:'#16a34a'},
-            {id:'consult',icon:'consult',label:'労働相談',color:'bg-purple-50',iconColor:'#7c3aed'},
+            {id:'consult',icon:'consult',label:'相談',color:'bg-purple-50',iconColor:'#7c3aed'},
             {id:'kyosai',icon:'kyosai',label:'自治労共済',color:'bg-emerald-50',iconColor:'#059669'},
           ].map(item=>(
             <button key={item.id} onClick={()=>onNav(item.id)} className={`${item.color} rounded-2xl p-4 text-left card-hover`}>
@@ -822,7 +833,7 @@ const SurveyCreate = ({onBack,onSubmit,totalMembers}) => {
 
 const ConsultTop = ({onSelect}) => (
   <div className="fade-in pb-24">
-    <Header title="労働相談"/>
+    <Header title="相談"/>
     <div className="px-4 pt-4">
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
         <p className="text-sm text-blue-800 font-bold mb-1">一人で抱え込まないでください</p>
@@ -1110,6 +1121,12 @@ const AdminConsults = ({onBack,consults,setConsults,user}) => {
     setConsults(cs=>cs.map(c=>c.id===id?{...c,status,adminNote:note||c.adminNote,adminReply:reply||c.adminReply}:c));
     setSelected(null);setNote('');setReply('');
   };
+  const deleteConsult=(id)=>{
+    if(confirm('この相談を削除しますか？削除すると元に戻せません。')){
+      setConsults(cs=>cs.filter(c=>c.id!==id));
+      setSelected(null);setNote('');setReply('');
+    }
+  };
   if(selected){
     const c=consults.find(x=>x.id===selected);
     if(!c)return null;
@@ -1142,7 +1159,8 @@ const AdminConsults = ({onBack,consults,setConsults,user}) => {
               <button key={s} onClick={()=>saveAndStatus(c.id,s)} className={`flex-1 py-2.5 rounded-xl text-xs font-bold border-2 transition-colors ${c.status===s?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{s}</button>
             ))}
           </div>
-          <button onClick={()=>saveAndStatus(c.id,c.status)} className="w-full bg-blue-700 text-white rounded-xl py-3 text-sm font-bold">保存する</button>
+          <button onClick={()=>saveAndStatus(c.id,c.status)} className="w-full bg-blue-700 text-white rounded-xl py-3 text-sm font-bold mb-3">保存する</button>
+          <button onClick={()=>deleteConsult(c.id)} className="w-full border border-red-200 text-red-500 rounded-xl py-2.5 text-sm flex items-center justify-center gap-2"><Icon name="trash" size={15} color="#ef4444"/>この相談を削除する</button>
         </div>
       </div>
     );
@@ -1163,18 +1181,23 @@ const AdminConsults = ({onBack,consults,setConsults,user}) => {
         {myConsults.length===0
           ?<div className="text-center py-12 text-gray-400 text-sm">{showAll?'相談はまだありません':'あなた宛の相談はありません'}</div>
           :myConsults.map(c=>(
-          <button key={c.id} onClick={()=>{setSelected(c.id);setNote('');setReply('');}} className="w-full bg-white rounded-xl border border-gray-100 p-4 mb-2 text-left card-hover">
-            <div className="flex items-center gap-2 mb-1">
-              <StatusBadge status={c.status}/>
-              <span className="tag bg-purple-100 text-purple-700">{c.category}</span>
-              <span className="text-xs text-gray-400 ml-auto">{c.date}</span>
+          <div key={c.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-2">
+            <button onClick={()=>{setSelected(c.id);setNote('');setReply('');}} className="w-full text-left">
+              <div className="flex items-center gap-2 mb-1">
+                <StatusBadge status={c.status}/>
+                <span className="tag bg-purple-100 text-purple-700">{c.category}</span>
+                <span className="text-xs text-gray-400 ml-auto">{c.date}</span>
+              </div>
+              <p className="text-sm text-gray-700 line-clamp-2 leading-snug">{c.content}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-400">確認コード: {c.confirmCode}</p>
+                {c.adminReply&&<span className="tag bg-blue-50 text-blue-500 text-xs">返信済</span>}
+              </div>
+            </button>
+            <div className="flex justify-end mt-2">
+              <button onClick={()=>deleteConsult(c.id)} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"><Icon name="trash" size={13} color="currentColor"/>削除</button>
             </div>
-            <p className="text-sm text-gray-700 line-clamp-2 leading-snug">{c.content}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-xs text-gray-400">確認コード: {c.confirmCode}</p>
-              {c.adminReply&&<span className="tag bg-blue-50 text-blue-500 text-xs">返信済</span>}
-            </div>
-          </button>
+          </div>
         ))}
       </div>
     </div>
@@ -1707,7 +1730,28 @@ const FirebaseSettings = ({onBack}) => {
           ))}
           <button onClick={save} className={`w-full rounded-xl py-3 font-bold text-sm ${cfg.apiKey&&cfg.authDomain&&cfg.projectId?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>保存する</button>
         </div>
-        {getFbConfig()&&<button onClick={clear} className="w-full border border-red-200 text-red-500 py-3 rounded-xl text-sm">Firebase設定をクリア（デモモードに戻す）</button>}
+        {getFbConfig()&&(
+          <div>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
+              <p className="text-xs font-bold text-green-700 mb-1">✓ 設定済み — 全組合員に配布する手順</p>
+              <p className="text-xs text-green-600 mb-3">下のボタンで設定済みHTMLをダウンロードし、GitHub Pagesに上書きアップロードしてください。以降は全デバイスで設定不要になります。</p>
+              <button onClick={()=>{
+                const cfg=getFbConfig();
+                if(!cfg)return;
+                const html=document.documentElement.outerHTML;
+                const embedded=html.replace('const FIREBASE_CONFIG=null;','const FIREBASE_CONFIG='+JSON.stringify(cfg)+';');
+                const blob=new Blob([embedded],{type:'text/html'});
+                const a=document.createElement('a');
+                a.href=URL.createObjectURL(blob);
+                a.download='index.html';
+                a.click();
+              }} className="w-full bg-green-600 text-white rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2">
+                <Icon name="board" size={16} color="white"/>Firebase設定済みHTMLをダウンロード
+              </button>
+            </div>
+            <button onClick={clear} className="w-full border border-red-200 text-red-500 py-3 rounded-xl text-sm">Firebase設定をクリア（デモモードに戻す）</button>
+          </div>
+        )}
       </div>
     </div>
   );
