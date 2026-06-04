@@ -19,6 +19,7 @@ window.addEventListener('error', function(e) {
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 * { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:10px;font-size:11px;font-weight:700;padding:0 5px}
@@ -41,7 +42,11 @@ textarea:focus,input:focus,select:focus{outline:2px solid #2E74B5;outline-offset
 const { useState, useEffect, useRef } = React;
 
 function loadData(key,fallback){try{const r=localStorage.getItem(key);return r?JSON.parse(r):fallback;}catch{return fallback;}}
-function saveData(key,data){localStorage.setItem(key,JSON.stringify(data));}
+function saveData(key,data){
+  localStorage.setItem(key,JSON.stringify(data));
+  const fs=getFs();
+  if(fs)fs.collection('union').doc(key).set({d:data}).catch(()=>{});
+}
 
 // ★ 管理者はここに Firebase 設定を埋め込んでください（設定後HTMLをダウンロードしてGitHub Pagesに上書きアップ）
 const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authDomain":"nishinoshima-town.firebaseapp.com","projectId":"nishinoshima-town"}; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
@@ -49,6 +54,11 @@ const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authD
 function getFbConfig(){
   if(FIREBASE_CONFIG)return FIREBASE_CONFIG;
   try{return JSON.parse(localStorage.getItem('fb_config')||'null');}catch{return null;}
+}
+const BAKED_MEMBERS=null; // 組合員リスト（管理者・氏名・所属）- ダウンロード時に自動埋め込み
+function getMembers(fallback){
+  if(BAKED_MEMBERS&&BAKED_MEMBERS.length>0)return BAKED_MEMBERS;
+  try{const r=localStorage.getItem('union_members');return r?JSON.parse(r):fallback;}catch{return fallback;}
 }
 function initFb(){
   const cfg=getFbConfig();if(!cfg)return null;
@@ -60,6 +70,11 @@ function getStorage(){
   const cfg=getFbConfig();
   if(!cfg||typeof firebase==='undefined')return null;
   try{if(!firebase.apps.length)firebase.initializeApp(cfg);return firebase.storage();}catch(e){return null;}
+}
+function getFs(){
+  const cfg=getFbConfig();
+  if(!cfg||typeof firebase==='undefined')return null;
+  try{if(!firebase.apps.length)firebase.initializeApp(cfg);return firebase.firestore();}catch(e){return null;}
 }
 async function uploadFile(file,path,onProgress){
   const storage=getStorage();
@@ -294,7 +309,7 @@ const LoginScreen = ({onLogin}) => {
     if(fbAuth){
       try{
         await fbAuth.signInWithEmailAndPassword(email,pw);
-        const mems=loadData('union_members',SAMPLE_MEMBERS);
+        const mems=getMembers(SAMPLE_MEMBERS);
         const profile=mems.find(m=>m.email===email);
         if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
         else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
@@ -1714,12 +1729,12 @@ const FirebaseSettings = ({onBack}) => {
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-xs text-blue-700">
           <p className="font-bold mb-1">設定手順</p>
           <p>1. console.firebase.google.com にアクセス</p>
-          <p>2. プロジェクト作成 → Authentication → Email/Password を有効化</p>
-          <p>3. Authentication → Users から組合員のアカウントを追加</p>
-          <p>4. プロジェクト設定 → ウェブアプリ → 設定値をここに入力</p>
-          <p className="font-bold mt-2 mb-1">📁 ファイル添付を使う場合（Storage）</p>
-          <p>5. 左メニュー「Storage」→「始める」→ 地域は asia-northeast1（東京）を選択</p>
-          <p>6. Rules タブを開き、ログイン済みユーザーの読み書きを許可するルールに書き換えて「公開」</p>
+          <p>2. Authentication → Email/Password を有効化・ユーザー登録</p>
+          <p>3. <b>Firestore Database</b> → 「データベースの作成」→ asia-northeast1 を選択</p>
+          <p>4. Firestoreの「ルール」タブを開き以下に書き換えて「公開」:</p>
+          <p className="bg-gray-100 rounded p-1 font-mono text-xs my-1">allow read, write: if request.auth != null;</p>
+          <p>5. プロジェクト設定 → ウェブアプリ → 設定値をここに入力</p>
+          <p className="font-bold mt-2 mb-1">✅ 設定後は全デバイスで自動同期されます</p>
         </div>
         {saved2&&<div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-sm text-green-700 font-bold text-center">✓ 保存しました</div>}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
@@ -1742,10 +1757,13 @@ const FirebaseSettings = ({onBack}) => {
                 fetch(window.location.href)
                   .then(r=>r.text())
                   .then(html=>{
-                    const marker='const FIREBASE_CONFIG=null;';
-                    const replacement='const FIREBASE_CONFIG='+JSON.stringify(cfg)+';';
-                    const embedded=html.includes(marker)?html.replace(marker,replacement):html;
-                    const blob=new Blob([embedded],{type:'text/html;charset=utf-8'});
+                    let out=html;
+                    const fbMarker='const FIREBASE_CONFIG=null;';
+                    out=out.includes(fbMarker)?out.replace(fbMarker,'const FIREBASE_CONFIG='+JSON.stringify(cfg)+';'):out;
+                    const memMarker='const BAKED_MEMBERS=null;';
+                    const mems=getMembers(SAMPLE_MEMBERS);
+                    out=out.includes(memMarker)?out.replace(memMarker,'const BAKED_MEMBERS='+JSON.stringify(mems)+';'):out;
+                    const blob=new Blob([out],{type:'text/html;charset=utf-8'});
                     const a=document.createElement('a');
                     a.href=URL.createObjectURL(blob);
                     a.download='index.html';
@@ -1896,6 +1914,40 @@ const App = () => {
   useEffect(()=>saveData('union_officers',officers),[officers]);
   useEffect(()=>saveData('union_activities',activities),[activities]);
 
+  // ─── Firestore リアルタイム同期 ──────────────────────────────────────────
+  useEffect(()=>{
+    const fs=getFs();
+    if(!fs)return;
+    const col=fs.collection('union');
+    const pairs=[
+      {key:'union_posts',set:setPosts},
+      {key:'union_surveys',set:setSurveys},
+      {key:'union_consults',set:setConsults},
+      {key:'union_members',set:setMembers},
+      {key:'union_faqs',set:setFaqs},
+      {key:'union_officers',set:setOfficers},
+      {key:'union_activities',set:setActivities},
+    ];
+    const unsubs=pairs.map(({key,set})=>{
+      // Firestoreにデータがなければローカルデータをプッシュ
+      col.doc(key).get().then(snap=>{
+        if(!snap.exists){
+          const local=JSON.parse(localStorage.getItem(key)||'null');
+          if(local)col.doc(key).set({d:local}).catch(()=>{});
+        }
+      }).catch(()=>{});
+      // リアルタイム同期
+      return col.doc(key).onSnapshot(snap=>{
+        if(snap.exists&&snap.data().d){
+          const data=snap.data().d;
+          localStorage.setItem(key,JSON.stringify(data));
+          set(data);
+        }
+      },()=>{});
+    });
+    return ()=>unsubs.forEach(u=>u());
+  },[]);
+
   const showToast=msg=>setToast(msg);
   const clearSub=()=>setSubScreen(null);
 
@@ -2038,11 +2090,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/
         : '全CDN読み込み済み → Babel解析エラーの可能性';
       root.innerHTML = '<div style="padding:20px;background:white;color:red;font-family:monospace">' +
         '<b>ページが表示されませんでした</b><br><br>' + msg + '<br><br>' +
-        checks.map(function(c){return c[0]+': '+(c[1]==='undefined'?'❌ 未読み込み':'✓ OK');}).join('<br>') +
-        '</div>';
-    }
-  }, 3000);
-})();
-</script>
-</body>
-</html>
+        checks.map(function(c){return c[0]+': '+(c[1]==='
