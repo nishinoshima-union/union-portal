@@ -1700,12 +1700,13 @@ const FirebaseSettings = ({onBack}) => {
   const saved=getFbConfig()||{};
   const [cfg,setCfg]=useState({apiKey:saved.apiKey||'',authDomain:saved.authDomain||'',projectId:saved.projectId||''});
   const [saved2,setSaved2]=useState(false);
+  const [hasCfg,setHasCfg]=useState(()=>!!getFbConfig());
   const save=()=>{
     if(!cfg.apiKey||!cfg.authDomain||!cfg.projectId)return;
     localStorage.setItem('fb_config',JSON.stringify(cfg));
-    setSaved2(true);setTimeout(onBack,1500);
+    setHasCfg(true);setSaved2(true);
   };
-  const clear=()=>{localStorage.removeItem('fb_config');setCfg({apiKey:'',authDomain:'',projectId:''});};
+  const clear=()=>{localStorage.removeItem('fb_config');setCfg({apiKey:'',authDomain:'',projectId:''});setHasCfg(false);};
   return(
     <div className="fade-in pb-24">
       <Header title="Firebase ログイン設定" onBack={onBack}/>
@@ -1730,7 +1731,7 @@ const FirebaseSettings = ({onBack}) => {
           ))}
           <button onClick={save} className={`w-full rounded-xl py-3 font-bold text-sm ${cfg.apiKey&&cfg.authDomain&&cfg.projectId?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>保存する</button>
         </div>
-        {getFbConfig()&&(
+        {hasCfg&&(
           <div>
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
               <p className="text-xs font-bold text-green-700 mb-1">✓ 設定済み — 全組合員に配布する手順</p>
