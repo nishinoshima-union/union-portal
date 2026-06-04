@@ -33,13 +33,9 @@ textarea:focus,input:focus,select:focus{outline:2px solid #2E74B5;outline-offset
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// ─── DATA HELPERS ────────────────────────────────────────────────────────────
-function loadData(key, fallback) {
-  try { const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; } catch{ return fallback; }
-}
-function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+function loadData(key,fallback){try{const r=localStorage.getItem(key);return r?JSON.parse(r):fallback;}catch{return fallback;}}
+function saveData(key,data){localStorage.setItem(key,JSON.stringify(data));}
 
-// ─── FIREBASE HELPERS ────────────────────────────────────────────────────────
 function getFbConfig(){try{return JSON.parse(localStorage.getItem('fb_config')||'null');}catch{return null;}}
 function initFb(){
   const cfg=getFbConfig();if(!cfg)return null;
@@ -47,17 +43,12 @@ function initFb(){
   if(!firebase.apps.length)firebase.initializeApp(cfg);
   return firebase.auth();
 }
-
-// ─── FIREBASE STORAGE ────────────────────────────────────────────────────────
 function getStorage(){
   const cfg=getFbConfig();
   if(!cfg||typeof firebase==='undefined')return null;
-  try{
-    if(!firebase.apps.length)firebase.initializeApp(cfg);
-    return firebase.storage();
-  }catch(e){return null;}
+  try{if(!firebase.apps.length)firebase.initializeApp(cfg);return firebase.storage();}catch(e){return null;}
 }
-async function uploadFile(file, path, onProgress){
+async function uploadFile(file,path,onProgress){
   const storage=getStorage();
   if(!storage)throw new Error('Firebase Storage が設定されていません');
   const ref=storage.ref(path+'/'+Date.now()+'_'+file.name);
@@ -71,14 +62,8 @@ async function uploadFile(file, path, onProgress){
   });
 }
 function formatSize(bytes){if(bytes<1024)return bytes+'B';if(bytes<1024*1024)return Math.round(bytes/1024)+'KB';return(bytes/1024/1024).toFixed(1)+'MB';}
-function getFileType(file){
-  const t=file.type;
-  if(t.startsWith('image/'))return 'image';
-  if(t==='application/pdf')return 'pdf';
-  return 'link';
-}
+function getFileType(file){const t=file.type;if(t.startsWith('image/'))return 'image';if(t==='application/pdf')return 'pdf';return 'link';}
 
-// ─── EMAILJS ─────────────────────────────────────────────────────────────────
 function getEjsCfg(){return{publicKey:localStorage.getItem('ejs_pubkey')||'',serviceId:localStorage.getItem('ejs_service')||'',templateId:localStorage.getItem('ejs_template')||'',adminEmail:localStorage.getItem('ejs_admin_email')||'',allEmail:localStorage.getItem('ejs_all_email')||''}}
 function notifOn(key){return localStorage.getItem('notif_'+key)!=='false'}
 async function sendMail({to,subject,body,senderName,type}){
@@ -88,7 +73,6 @@ async function sendMail({to,subject,body,senderName,type}){
   return emailjs.send(cfg.serviceId,cfg.templateId,{to_email:to,subject,body,sender_name:senderName||'西ノ島町職員労働組合',notify_type:type||'',app_url:window.location.href});
 }
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const CATEGORY_MAP={
   important:{label:'重要連絡',color:'bg-red-100 text-red-700',dot:'bg-red-500'},
   activity:{label:'組合活動',color:'bg-blue-100 text-blue-700',dot:'bg-blue-500'},
@@ -97,48 +81,113 @@ const CATEGORY_MAP={
   notice:{label:'お知らせ',color:'bg-gray-100 text-gray-600',dot:'bg-gray-400'},
 };
 const POST_TEMPLATES=[
-  {label:'賞与交渉結果',category:'important',title:'令和○年度 ○季賞与に関するお知らせ',body:'令和○年度の○季賞与について、組合と当局との交渉結果をお知らせします。\n\n今年度の○季賞与は、月例給の○○月分（前年比○月増減）で妥結いたしました。支給日は○月○日（○）の予定です。\n\n詳細については、添付の妥結内容をご確認ください。'},
-  {label:'定期大会案内',category:'activity',title:'令和○年度 定期大会のご案内（○月○日開催）',body:'令和○年度 定期大会を下記のとおり開催いたします。\n\n■ 日時：○年○月○日（○）○時〜○時\n■ 場所：○○\n■ 議題：活動報告・決算報告・次年度方針・役員改選\n\n全組合員のご参加をお願いいたします。'},
-  {label:'申請受付開始',category:'welfare',title:'○○申込受付開始（○月分）',body:'組合員を対象とした○○の申込受付を開始します。\n\n■ 対象：○○\n■ 補助額：○○\n■ 申込期限：○月○日（○）\n■ 申込方法：○○\n\nご不明な点は担当者までお問い合わせください。'},
-  {label:'イベント案内',category:'event',title:'○○参加者募集！',body:'今年度の○○を下記のとおり開催します。\n\n■ 内容：○○\n■ 日時：○年○月○日（○）○時〜\n■ 場所：○○\n■ 参加費：○○\n\n家族参加も大歓迎です！参加希望の方は○月○日までにお申し込みください。'},
-  {label:'緊急連絡',category:'important',title:'【緊急】○○についてのお知らせ',body:'組合員の皆様へ\n\n以下の件につきまして、緊急のご連絡をいたします。\n\n○○\n\n詳細については追ってご連絡します。ご不明な点は執行部までご連絡ください。'},
+  {label:"賞与交渉結果",category:"important",title:"令和○年度 ○季賞与に関するお知らせ",body:"令和○年度の○季賞与について、組合と当局との交渉結果をお知らせします。
+
+今年度の○季賞与は、月例給の○○月分（前年比○月増減）で妥結いたしました。支給日は○月○日（○）の予定です。
+
+詳細については、添付の妥結内容をご確認ください。"},
+  {label:"定期大会案内",category:"activity",title:"令和○年度 定期大会のご案内（○月○日開催）",body:"令和○年度 定期大会を下記のとおり開催いたします。
+
+■ 日時：○年○月○日（○）○時〜○時
+■ 場所：○○
+■ 議題：活動報告・決算報告・次年度方針・役員改選
+
+全組合員のご参加をお願いいたします。"},
+  {label:"申請受付開始",category:"welfare",title:"○○申込受付開始（○月分）",body:"組合員を対象とした○○の申込受付を開始します。
+
+■ 対象：○○
+■ 補助額：○○
+■ 申込期限：○月○日（○）
+■ 申込方法：○○
+
+ご不明な点は担当者までお問い合わせください。"},
+  {label:"イベント案内",category:"event",title:"○○参加者募集！",body:"今年度の○○を下記のとおり開催します。
+
+■ 内容：○○
+■ 日時：○年○月○日（○）○時〜
+■ 場所：○○
+■ 参加費：○○
+
+家族参加も大歓迎です！参加希望の方は○月○日までにお申し込みください。"},
+  {label:"緊急連絡",category:"important",title:"【緊急】○○についてのお知らせ",body:"組合員の皆様へ
+
+以下の件につきまして、緊急のご連絡をいたします。
+
+○○
+
+詳細については追ってご連絡します。ご不明な点は執行部までご連絡ください。"},
 ];
 const SAMPLE_MEMBERS=[
-  {id:1,name:'田中 一郎',dept:'総務課',role:'admin',joinDate:'2018-04-01',email:'tanaka@nishinoshima.lg.jp'},
-  {id:2,name:'山本 花子',dept:'住民課',role:'member',joinDate:'2019-04-01',email:'yamamoto@nishinoshima.lg.jp'},
-  {id:3,name:'佐藤 健二',dept:'産業振興課',role:'member',joinDate:'2020-04-01',email:'sato@nishinoshima.lg.jp'},
-  {id:4,name:'鈴木 美咲',dept:'福祉課',role:'member',joinDate:'2021-04-01',email:'suzuki@nishinoshima.lg.jp'},
-  {id:5,name:'中村 太郎',dept:'建設課',role:'member',joinDate:'2017-04-01',email:'nakamura@nishinoshima.lg.jp'},
+  {id:1,name:"田中 一郎",dept:"総務課",role:"admin",joinDate:"2018-04-01",email:"tanaka@nishinoshima.lg.jp"},
+  {id:2,name:"山本 花子",dept:"住民課",role:"member",joinDate:"2019-04-01",email:"yamamoto@nishinoshima.lg.jp"},
+  {id:3,name:"佐藤 健二",dept:"産業振興課",role:"member",joinDate:"2020-04-01",email:"sato@nishinoshima.lg.jp"},
+  {id:4,name:"鈴木 美咲",dept:"福祉課",role:"member",joinDate:"2021-04-01",email:"suzuki@nishinoshima.lg.jp"},
+  {id:5,name:"中村 太郎",dept:"建設課",role:"member",joinDate:"2017-04-01",email:"nakamura@nishinoshima.lg.jp"},
 ];
 const SAMPLE_POSTS=[
-  {id:1,title:'【重要】令和6年度 夏季賞与に関するお知らせ',category:'important',body:'令和6年度の夏季賞与について、組合と当局との交渉結果をお知らせします。\n\n今年度の夏季賞与は、月例給の2.2月分（前年比0.1月増）で妥結いたしました。支給日は6月28日（金）の予定です。\n\n詳細については、添付の妥結内容をご確認ください。',isPinned:true,authorName:'執行委員長 田中',publishedAt:'2026-06-01',readCount:42,totalCount:58,isRead:false,attachments:[{name:'令和6年夏季賞与_妥結内容.pdf',size:'245KB'}]},
-  {id:2,title:'定期大会のご案内（6月20日開催）',category:'activity',body:'令和6年度 定期大会を下記のとおり開催いたします。\n\n■ 日時：2026年6月20日（土）14:00〜16:00\n■ 場所：西ノ島町民会館 大ホール\n■ 議題：活動報告・決算報告・次年度方針・役員改選\n\n全組合員のご参加をお待ちしております。',isPinned:false,authorName:'書記長 山本',publishedAt:'2026-05-28',readCount:31,totalCount:58,isRead:true,attachments:[]},
-  {id:3,title:'人間ドック申込受付開始（7月分）',category:'welfare',body:'組合員および家族を対象とした人間ドック（組合補助あり）の申込受付を開始します。\n\n■ 対象：組合員およびその配偶者\n■ 補助額：1人あたり8,000円\n■ 申込期限：6月30日（月）',isPinned:false,authorName:'厚生部長 佐藤',publishedAt:'2026-05-25',readCount:28,totalCount:58,isRead:false,attachments:[{name:'人間ドック申込書.pdf',size:'180KB'}]},
-  {id:4,title:'夏のレクリエーション参加者募集！',category:'event',body:'今年度の夏レクリエーションを以下のとおり開催します。\n\n■ 内容：BBQ大会＆スポーツ大会\n■ 日時：2026年7月19日（土）10:00〜\n■ 場所：西ノ島浦郷港公園\n\n家族参加も大歓迎です！',isPinned:false,authorName:'厚生部 鈴木',publishedAt:'2026-05-20',readCount:45,totalCount:58,isRead:true,attachments:[]},
+  {id:1,title:"【重要】令和6年度 夏季賞与に関するお知らせ",category:"important",body:"令和6年度の夏季賞与について、組合と当局との交渉結果をお知らせします。
+
+今年度の夏季賞与は、月例給の2.2月分（前年比0.1月増）で妥結いたしました。支給日は6月28日（金）の予定です。",isPinned:true,authorName:"執行委員長 田中",publishedAt:"2026-06-01",readCount:42,totalCount:58,isRead:false,attachments:[{name:"令和6年夏季賞与_妥結内容.pdf",size:"245KB",type:"pdf",url:""}]},
+  {id:2,title:"定期大会のご案内（6月20日開催）",category:"activity",body:"令和6年度 定期大会を下記のとおり開催いたします。
+
+■ 日時：2026年6月20日（土）14:00〜16:00
+■ 場所：西ノ島町民会館 大ホール
+■ 議題：活動報告・決算報告・次年度方針・役員改選",isPinned:false,authorName:"書記長 山本",publishedAt:"2026-05-28",readCount:31,totalCount:58,isRead:true,attachments:[]},
+  {id:3,title:"人間ドック申込受付開始（7月分）",category:"welfare",body:"組合員および家族を対象とした人間ドック（組合補助あり）の申込受付を開始します。
+
+■ 対象：組合員およびその配偶者
+■ 補助額：1人あたり8,000円
+■ 申込期限：6月30日（月）",isPinned:false,authorName:"厚生部長 佐藤",publishedAt:"2026-05-25",readCount:28,totalCount:58,isRead:false,attachments:[]},
+  {id:4,title:"夏のレクリエーション参加者募集！",category:"event",body:"今年度の夏レクリエーションを以下のとおり開催します。
+
+■ 内容：BBQ大会＆スポーツ大会
+■ 日時：2026年7月19日（土）10:00〜
+■ 場所：西ノ島浦郷港公園
+
+家族参加も大歓迎です！",isPinned:false,authorName:"厚生部 鈴木",publishedAt:"2026-05-20",readCount:45,totalCount:58,isRead:true,attachments:[]},
 ];
 const SAMPLE_SURVEYS=[
-  {id:1,title:'定期大会 出欠確認',description:'6月20日開催の定期大会への出欠をお知らせください。',endAt:'2026-06-15',status:'active',isAnswered:false,answerCount:38,totalCount:58,type:'single',options:['出席','欠席','未定']},
-  {id:2,title:'令和6年度 組合活動に関する意識調査',description:'組合活動の改善のため、皆さまのご意見をお聞かせください。',endAt:'2026-06-30',status:'active',isAnswered:false,answerCount:22,totalCount:58,type:'rating',options:[]},
-  {id:3,title:'夏レクリエーション参加申込',description:'7月19日の夏レク参加希望をお知らせください。',endAt:'2026-07-05',status:'active',isAnswered:true,answerCount:29,totalCount:58,type:'multi',options:['参加する（本人のみ）','参加する（家族同伴）','参加しない']},
+  {id:1,title:"定期大会 出欠確認",description:"6月20日開催の定期大会への出欠をお知らせください。",endAt:"2026-06-15",status:"active",isAnswered:false,answerCount:38,totalCount:58,
+    questions:[
+      {id:1,text:"定期大会（6月20日）に出席できますか？",type:"single",options:["出席","欠席","未定"]},
+      {id:2,text:"欠席の場合、理由をお聞かせください（任意）",type:"text",options:[]},
+    ]},
+  {id:2,title:"令和6年度 組合活動に関する意識調査",description:"組合活動の改善のため、皆さまのご意見をお聞かせください。",endAt:"2026-06-30",status:"active",isAnswered:false,answerCount:22,totalCount:58,
+    questions:[
+      {id:1,text:"今年度の組合活動全体を評価してください",type:"rating",options:[]},
+      {id:2,text:"特に力を入れてほしい取り組みを選んでください（複数可）",type:"multi",options:["賃金交渉","労働時間削減","ハラスメント対策","福利厚生充実","情報発信強化"]},
+      {id:3,text:"その他ご意見・ご要望があればお聞かせください",type:"text",options:[]},
+    ]},
+  {id:3,title:"夏レクリエーション参加申込",description:"7月19日の夏レク参加希望をお知らせください。",endAt:"2026-07-05",status:"active",isAnswered:true,answerCount:29,totalCount:58,
+    questions:[
+      {id:1,text:"夏レクリエーション（7月19日）に参加しますか？",type:"single",options:["参加する（本人のみ）","参加する（家族同伴）","参加しない"]},
+      {id:2,text:"参加される場合、同伴者の人数を教えてください",type:"single",options:["0人（本人のみ）","1人","2人","3人以上"]},
+    ]},
 ];
 const SAMPLE_FAQS=[
-  {id:1,category:'労働時間・休暇',q:'有給休暇の申請方法を教えてください',a:'有給休暇は原則として取得希望日の3日前までに所属長へ申請してください。繁忙期であっても取得する権利がありますので、遠慮せずに申請してください。'},
-  {id:2,category:'労働時間・休暇',q:'時間外勤務の上限はどのくらいですか？',a:'地方公務員の時間外勤務は原則として月45時間・年360時間が上限です。上限を超えそうな場合は、組合にご相談ください。'},
-  {id:3,category:'賃金・手当',q:'通勤手当の変更手続きはどうすればいいですか？',a:'引越し等で通勤経路が変わった場合は、変更日から14日以内に人事課へ届け出が必要です。手続きが遅れると差額の返還が発生する場合があります。'},
-  {id:4,category:'ハラスメント',q:'ハラスメントを受けていると思うのですが、どうすればいいですか？',a:'まず、できる限り記録（日時・場所・言動の内容）を残しておいてください。組合の匿名相談フォームや相談予約からご相談いただけます。一人で抱え込まないでください。'},
-  {id:5,category:'組合制度・手続き',q:'慶弔見舞金はどのような場合にもらえますか？',a:'①結婚祝金　②出産祝金　③弔慰金（本人・配偶者・子・親）　④入院見舞金（7日以上）などがあります。詳しくは執行部へ。'},
-  {id:6,category:'組合制度・手続き',q:'組合費はいくらですか？何に使われていますか？',a:'組合費は月例給の約0.5%です。主な使途：組合活動費・上部団体費・福利厚生補助・慶弔見舞金積立・運営事務費。毎年の定期大会で決算報告を行っています。'},
+  {id:1,category:"労働時間・休暇",q:"有給休暇の申請方法を教えてください",a:"有給休暇は原則として取得希望日の3日前までに所属長へ申請してください。繁忙期であっても取得する権利がありますので、遠慮せずに申請してください。"},
+  {id:2,category:"労働時間・休暇",q:"時間外勤務の上限はどのくらいですか？",a:"地方公務員の時間外勤務は原則として月45時間・年360時間が上限です。上限を超えそうな場合は、組合にご相談ください。"},
+  {id:3,category:"賃金・手当",q:"通勤手当の変更手続きはどうすればいいですか？",a:"引越し等で通勤経路が変わった場合は、変更日から14日以内に人事課へ届け出が必要です。手続きが遅れると差額の返還が発生する場合があります。"},
+  {id:4,category:"ハラスメント",q:"ハラスメントを受けていると思うのですが、どうすればいいですか？",a:"まず、できる限り記録（日時・場所・言動の内容）を残しておいてください。組合の匿名相談フォームや相談予約からご相談いただけます。一人で抱え込まないでください。"},
+  {id:5,category:"組合制度・手続き",q:"慶弔見舞金はどのような場合にもらえますか？",a:"①結婚祝金　②出産祝金　③弔慰金（本人・配偶者・子・親）　④入院見舞金（7日以上）などがあります。詳しくは執行部へ。"},
+  {id:6,category:"組合制度・手続き",q:"組合費はいくらですか？何に使われていますか？",a:"組合費は月例給の約0.5%です。主な使途：組合活動費・上部団体費・福利厚生補助・慶弔見舞金積立・運営事務費。毎年の定期大会で決算報告を行っています。"},
 ];
 const SAMPLE_OFFICERS=[
-  {id:1,title:'執行委員長',name:'田中 一郎',dept:'総務課',note:''},
-  {id:2,title:'副委員長',name:'山本 花子',dept:'住民課',note:''},
-  {id:3,title:'書記長',name:'佐藤 健二',dept:'産業振興課',note:''},
-  {id:4,title:'書記次長',name:'鈴木 美咲',dept:'福祉課',note:''},
-  {id:5,title:'会計',name:'中村 太郎',dept:'建設課',note:''},
-  {id:6,title:'会計監査',name:'小林 和子',dept:'教育委員会',note:''},
-  {id:7,title:'厚生部長',name:'加藤 博',dept:'住民課',note:''},
-  {id:8,title:'青年部長',name:'伊藤 翼',dept:'総務課',note:''},
+  {id:1,title:"執行委員長",name:"田中 一郎",dept:"総務課",note:"",email:"tanaka@nishinoshima.lg.jp"},
+  {id:2,title:"副委員長",name:"山本 花子",dept:"住民課",note:"",email:"yamamoto@nishinoshima.lg.jp"},
+  {id:3,title:"書記長",name:"佐藤 健二",dept:"産業振興課",note:"",email:"sato@nishinoshima.lg.jp"},
+  {id:4,title:"書記次長",name:"鈴木 美咲",dept:"福祉課",note:"",email:"suzuki@nishinoshima.lg.jp"},
+  {id:5,title:"会計",name:"中村 太郎",dept:"建設課",note:"",email:"nakamura@nishinoshima.lg.jp"},
+  {id:6,title:"会計監査",name:"小林 和子",dept:"教育委員会",note:"",email:""},
+  {id:7,title:"厚生部長",name:"加藤 博",dept:"住民課",note:"",email:""},
+  {id:8,title:"青年部長",name:"伊藤 翼",dept:"総務課",note:"",email:""},
 ];
+const SAMPLE_CONSULTS=[
+  {id:1,category:"労働時間・休暇",content:"上司から毎日のように残業を強要されています。断れない雰囲気があり困っています。",date:"2026-06-02",status:"未対応",confirmCode:"CL-2340",recipientName:"執行委員長 田中 一郎",recipientEmail:"tanaka@nishinoshima.lg.jp",adminNote:"",adminReply:""},
+  {id:2,category:"ハラスメント",content:"特定の職員に対して他の職員の前で叱責することが繰り返されています。",date:"2026-06-01",status:"対応中",confirmCode:"CL-2339",recipientName:"書記長 佐藤 健二",recipientEmail:"sato@nishinoshima.lg.jp",adminNote:"担当者が状況確認中。6/10に面談予定。",adminReply:"ご相談ありがとうございます。状況を確認しており、近日中に対応方針をお伝えします。"},
+  {id:3,category:"賃金・手当",content:"時間外手当の計算が正しくない可能性があります。確認方法を教えてください。",date:"2026-05-28",status:"解決済",confirmCode:"CL-2338",recipientName:"執行委員長 田中 一郎",recipientEmail:"tanaka@nishinoshima.lg.jp",adminNote:"計算方法を説明し解決。",adminReply:"時間外手当の計算方法についてご説明しました。給与明細の確認方法と、相違があった場合の申し出先についてもご案内済みです。"},
+];
+
 const UNION_RULES_DEFAULT=`第1章 総則
 
 第1条（名称）
@@ -153,7 +202,7 @@ const UNION_RULES_DEFAULT=`第1章 総則
 第2章 組合員
 
 第4条（資格）
-本組合の組合員は西ノ島町の一般職員とする。ただし、管理職員はこの限りでない。
+本組合の組合員は西ノ島町の一般職員とする。
 
 第5条（権利）
 組合員は均等に組合の運営に参与する権利を有する。
@@ -168,15 +217,12 @@ const UNION_RULES_DEFAULT=`第1章 総則
 執行委員長1名、副委員長1名、書記長1名、書記次長1名、会計1名、会計監査1名
 
 第8条（任期）
-役員の任期は2年とする。ただし、再任を妨げない。
+役員の任期は2年とする。
 
 第4章 会議
 
 第9条（定期大会）
 定期大会は年1回開催する。
-
-第10条（臨時大会）
-臨時大会は執行委員会が必要と認めたとき、または組合員の3分の1以上の要求があるときに開催する。
 
 第5章 会計
 
@@ -186,22 +232,15 @@ const UNION_RULES_DEFAULT=`第1章 総則
 第12条（会計年度）
 本組合の会計年度は4月1日に始まり翌年3月31日に終わる。`;
 const SAMPLE_ACTIVITIES=[
-  {id:1,title:'令和6年度 定期大会',date:'2026-06-20',body:'令和6年度定期大会を西ノ島町民会館にて開催しました。組合員58名中42名が出席し、令和6年度の活動方針・予算案を承認しました。',imageUrl:'',tags:['大会']},
-  {id:2,title:'夏季賞与交渉 妥結報告',date:'2026-06-01',body:'令和6年度夏季賞与について当局と交渉を行い、月例給2.2月分（前年比0.1月増）で妥結しました。組合員の皆さまのご支持に感謝いたします。',imageUrl:'',tags:['交渉']},
-  {id:3,title:'春の職場環境改善キャンペーン',date:'2026-04-15',body:'「声をあげよう」をテーマに職場環境改善キャンペーンを実施。組合員アンケートには51名が回答し、時間外勤務の削減と休暇取得促進について当局と協議しました。',imageUrl:'',tags:['活動']},
+  {id:1,title:"令和6年度 定期大会",date:"2026-06-20",body:"令和6年度定期大会を西ノ島町民会館にて開催しました。組合員58名中42名が出席し、令和6年度の活動方針・予算案を承認しました。",imageUrl:"",tags:["大会"]},
+  {id:2,title:"夏季賞与交渉 妥結報告",date:"2026-06-01",body:"令和6年度夏季賞与について当局と交渉を行い、月例給2.2月分（前年比0.1月増）で妥結しました。",imageUrl:"",tags:["交渉"]},
+  {id:3,title:"春の職場環境改善キャンペーン",date:"2026-04-15",body:"職場環境改善キャンペーンを実施。組合員アンケートには51名が回答し、時間外勤務の削減と休暇取得促進について当局と協議しました。",imageUrl:"",tags:["活動"]},
 ];
 
-const SAMPLE_CONSULTS=[
-  {id:1,category:'労働時間・休暇',content:'上司から毎日のように残業を強要されています。断れない雰囲気があり困っています。',date:'2026-06-02',status:'未対応',confirmCode:'CL-2340',adminNote:''},
-  {id:2,category:'ハラスメント',content:'特定の職員に対して他の職員の前で叱責することが繰り返されています。',date:'2026-06-01',status:'対応中',confirmCode:'CL-2339',adminNote:'担当者が状況確認中。6/10に面談予定。'},
-  {id:3,category:'賃金・手当',content:'時間外手当の計算が正しくない可能性があります。確認方法を教えてください。',date:'2026-05-28',status:'解決済',confirmCode:'CL-2338',adminNote:'計算方法を説明し解決。'},
-];
-
-// ─── UTILITY COMPONENTS ─────────────────────────────────────────────────────
 const Icon = ({name,size=20,color='currentColor'}) => {
   const icons = {
     home:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-    board:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+    board:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
     survey:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
     consult:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
     menu:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
@@ -221,6 +260,12 @@ const Icon = ({name,size=20,color='currentColor'}) => {
     kyosai:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/><circle cx="12" cy="7" r="2"/></svg>,
   };
   return icons[name]||null;
+};
+
+const StatusBadge = ({status}) => {
+  const map={未対応:'bg-red-100 text-red-700',対応中:'bg-yellow-100 text-yellow-700',解決済:'bg-green-100 text-green-700',active:'bg-blue-100 text-blue-700',closed:'bg-gray-100 text-gray-500'};
+  const labelMap={active:'受付中',closed:'終了'};
+  return <span className={`tag ${map[status]||'bg-gray-100 text-gray-600'}`}>{labelMap[status]||status}</span>;
 };
 
 const Header = ({title,onBack,right}) => (
@@ -243,13 +288,14 @@ const BottomNav = ({active,onChange,unreads}) => {
       {items.map(({id,label})=>{
         const cnt=unreads[id]||0;
         const isActive=active===id;
-        return (
+        const iconName={home:'home',board:'board',survey:'survey',consult:'consult',menu:'menu'}[id];
+        return(
           <button key={id} className="bottom-nav-item" onClick={()=>onChange(id)}>
             <div className="relative">
-              <Icon name={id} size={22} color={isActive?'#1d4ed8':'#9ca3af'}/>
-              {cnt>0&&<span className="badge bg-red-500 text-white absolute -top-1.5 -right-2">{cnt}</span>}
+              <Icon name={iconName} size={22} color={isActive?'#1d4ed8':'#9ca3af'}/>
+              {cnt>0&&<span className="badge bg-red-500 text-white absolute -top-1.5 -right-2.5">{cnt}</span>}
             </div>
-            <span className={`text-[10px] mt-1 ${isActive?'text-blue-700 font-bold':'text-gray-400'}`}>{label}</span>
+            <span className={`text-[10px] mt-0.5 font-medium ${isActive?'text-blue-700':'text-gray-400'}`}>{label}</span>
           </button>
         );
       })}
@@ -257,15 +303,8 @@ const BottomNav = ({active,onChange,unreads}) => {
   );
 };
 
-const StatusBadge = ({status}) => {
-  const map={未対応:'bg-red-100 text-red-700',対応中:'bg-yellow-100 text-yellow-700',解決済:'bg-green-100 text-green-700',active:'bg-blue-100 text-blue-700',closed:'bg-gray-100 text-gray-500'};
-  const labelMap={active:'受付中',closed:'終了'};
-  return <span className={`tag ${map[status]||'bg-gray-100 text-gray-600'}`}>{labelMap[status]||status}</span>;
-};
-
-// ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
 const LoginScreen = ({onLogin}) => {
-  const [mode,setMode]=useState('login'); // 'login' | 'register'
+  const [mode,setMode]=useState('login');
   const [email,setEmail]=useState(()=>localStorage.getItem('saved_email')||'');
   const [pw,setPw]=useState(()=>localStorage.getItem('saved_pw')||'');
   const [pw2,setPw2]=useState('');
@@ -276,16 +315,14 @@ const LoginScreen = ({onLogin}) => {
   const [err,setErr]=useState('');
   const [loading,setLoading]=useState(false);
   const [done,setDone]=useState(false);
-
   const ACCOUNTS=[
     {email:'admin@union.jp',password:'admin123',name:'田中 一郎',dept:'執行部（組合委員長）',role:'admin'},
     {email:'member@union.jp',password:'member123',name:'山本 花子',dept:'住民課',role:'member'},
   ];
-
-  const handleLogin = async () => {
+  const handleLogin=async()=>{
     setErr('');setLoading(true);
     let fbAuth=null;
-    try{ fbAuth=initFb(); }catch(e){ fbAuth=null; }
+    try{fbAuth=initFb();}catch(e){fbAuth=null;}
     if(fbAuth){
       try{
         await fbAuth.signInWithEmailAndPassword(email,pw);
@@ -297,8 +334,6 @@ const LoginScreen = ({onLogin}) => {
       }catch(e){
         const code=e?.code||'';
         if(code==='auth/user-not-found'||code==='auth/wrong-password'||code==='auth/invalid-credential')setErr('メールアドレスまたはパスワードが正しくありません');
-        else if(code==='auth/invalid-api-key'||code==='auth/invalid-app-argument')setErr('Firebase設定（API Key等）が正しくありません。メニュー→Firebase設定を確認してください');
-        else if(code==='auth/network-request-failed')setErr('ネットワークエラーです。接続を確認してください');
         else if(code==='auth/unauthorized-domain')setErr('このドメインはFirebaseに未登録です。FirebaseコンソールのAuthenticationで承認済みドメインに追加してください');
         else setErr('ログインエラー: '+(code||e?.message||'不明'));
       }
@@ -308,17 +343,15 @@ const LoginScreen = ({onLogin}) => {
     if(!found){setErr('メールアドレスまたはパスワードが正しくありません');setLoading(false);return;}
     if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
     else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
-    setLoading(false);
-    onLogin(found);
+    setLoading(false);onLogin(found);
   };
-
-  const handleRegister = async () => {
+  const handleRegister=async()=>{
     setErr('');
     if(!name||!dept||!email||!pw)return setErr('すべての項目を入力してください');
     if(pw!==pw2)return setErr('パスワードが一致しません');
     if(pw.length<6)return setErr('パスワードは6文字以上にしてください');
     let fbAuth=null;
-    try{ fbAuth=initFb(); }catch(e){ fbAuth=null; }
+    try{fbAuth=initFb();}catch(e){fbAuth=null;}
     if(!fbAuth)return setErr('新規登録にはFirebase設定が必要です。管理者にお問い合わせください。');
     setLoading(true);
     try{
@@ -327,19 +360,14 @@ const LoginScreen = ({onLogin}) => {
       const mems=loadData('union_members',SAMPLE_MEMBERS);
       saveData('union_members',[...mems,newMember]);
       setDone(true);
-      setTimeout(()=>{
-        onLogin({email,name,dept,role:'member'});
-      },1500);
+      setTimeout(()=>{onLogin({email,name,dept,role:'member'});},1500);
     }catch(e){
       const code=e?.code||'';
       if(code==='auth/email-already-in-use')setErr('このメールアドレスはすでに登録されています');
-      else if(code==='auth/weak-password')setErr('パスワードは6文字以上にしてください');
-      else if(code==='auth/invalid-email')setErr('メールアドレスの形式が正しくありません');
       else setErr('登録エラー: '+(code||e?.message||'不明'));
     }
     setLoading(false);
   };
-
   if(done)return(
     <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-900 flex flex-col items-center justify-center p-6">
       <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
@@ -349,13 +377,10 @@ const LoginScreen = ({onLogin}) => {
       </div>
     </div>
   );
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-900 flex flex-col items-center justify-center p-6">
       <div className="mb-8 text-center">
-        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-          <Icon name="shield" size={32} color="#1d4ed8"/>
-        </div>
+        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><Icon name="shield" size={32} color="#1d4ed8"/></div>
         <h1 className="text-white text-xl font-bold">西ノ島町職員労働組合</h1>
         <p className="text-blue-200 text-sm mt-1">組合員ポータル</p>
       </div>
@@ -365,16 +390,15 @@ const LoginScreen = ({onLogin}) => {
           <button onClick={()=>{setMode('register');setErr('');}} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode==='register'?'bg-white text-gray-900 shadow-sm':'text-gray-500'}`}>新規登録</button>
         </div>
         {err&&<div className="bg-red-50 text-red-600 text-xs px-3 py-2 rounded-lg mb-4 leading-relaxed">{err}</div>}
-
         {mode==='login'&&(<>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label>
-            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" placeholder="example@union.jp" value={email} onChange={e=>setEmail(e.target.value)}/>
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" value={email} onChange={e=>setEmail(e.target.value)}/>
           </div>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード</label>
             <div className="relative">
-              <input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} placeholder="パスワードを入力" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
+              <input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
               <button className="absolute right-3 top-3.5 text-gray-400" onClick={()=>setShowPw(!showPw)}><Icon name={showPw?'eyeoff':'eye'} size={18} color="#9ca3af"/></button>
             </div>
           </div>
@@ -382,140 +406,116 @@ const LoginScreen = ({onLogin}) => {
             <input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)} className="w-4 h-4 rounded accent-blue-600"/>
             <span className="text-sm text-gray-600">ログイン情報を記憶する</span>
           </label>
-          <button onClick={handleLogin} disabled={loading} className={`w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm transition-all ${loading?'opacity-60':'hover:bg-blue-800 active:scale-95'}`}>{loading?'ログイン中...':'ログイン'}</button>
+          <button onClick={handleLogin} disabled={loading} className={`w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm transition-all ${loading?'opacity-60':''}`}>{loading?'ログイン中...':'ログイン'}</button>
           <div className="mt-4 p-3 bg-gray-50 rounded-xl">
-            {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">Firebaseに登録したメール・パスワードでログインしてください</p></>):(<><p className="text-xs text-gray-400 font-bold mb-1">デモアカウント（Firebase未設定時）</p><p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-500">組合員: member@union.jp / member123</p></>)}
+            {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p></>):(<><p className="text-xs text-gray-400 font-bold mb-1">デモアカウント</p><p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-500">組合員: member@union.jp / member123</p></>)}
           </div>
         </>)}
-
         {mode==='register'&&(<>
           {!getFbConfig()&&<div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4 text-xs text-yellow-700">新規登録にはFirebase設定が必要です。管理者に設定を依頼してください。</div>}
-          <div className="mb-3">
-            <label className="text-xs font-bold text-gray-500 mb-1 block">氏名</label>
-            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" placeholder="山田 太郎" value={name} onChange={e=>setName(e.target.value)}/>
-          </div>
-          <div className="mb-3">
-            <label className="text-xs font-bold text-gray-500 mb-1 block">所属課</label>
-            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" placeholder="例：総務課" value={dept} onChange={e=>setDept(e.target.value)}/>
-          </div>
-          <div className="mb-3">
-            <label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label>
-            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" placeholder="example@nishinoshima.lg.jp" value={email} onChange={e=>setEmail(e.target.value)}/>
-          </div>
-          <div className="mb-3">
-            <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード（6文字以上）</label>
-            <div className="relative">
-              <input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} placeholder="パスワードを設定" value={pw} onChange={e=>setPw(e.target.value)}/>
-              <button className="absolute right-3 top-3.5" onClick={()=>setShowPw(!showPw)}><Icon name={showPw?'eyeoff':'eye'} size={18} color="#9ca3af"/></button>
-            </div>
-          </div>
-          <div className="mb-5">
-            <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード（確認）</label>
-            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="password" placeholder="もう一度入力" value={pw2} onChange={e=>setPw2(e.target.value)}/>
-          </div>
-          <button onClick={handleRegister} disabled={loading||!getFbConfig()} className={`w-full rounded-xl py-3 font-bold text-sm transition-all ${loading||!getFbConfig()?'bg-gray-200 text-gray-400':'bg-blue-700 text-white hover:bg-blue-800 active:scale-95'}`}>{loading?'登録中...':'登録する'}</button>
+          <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">氏名</label><input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" value={name} onChange={e=>setName(e.target.value)}/></div>
+          <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">所属課</label><input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" value={dept} onChange={e=>setDept(e.target.value)}/></div>
+          <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label><input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" value={email} onChange={e=>setEmail(e.target.value)}/></div>
+          <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">パスワード（6文字以上）</label><div className="relative"><input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} value={pw} onChange={e=>setPw(e.target.value)}/><button className="absolute right-3 top-3.5" onClick={()=>setShowPw(!showPw)}><Icon name={showPw?'eyeoff':'eye'} size={18} color="#9ca3af"/></button></div></div>
+          <div className="mb-5"><label className="text-xs font-bold text-gray-500 mb-1 block">パスワード（確認）</label><input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="password" value={pw2} onChange={e=>setPw2(e.target.value)}/></div>
+          <button onClick={handleRegister} disabled={loading||!getFbConfig()} className={`w-full rounded-xl py-3 font-bold text-sm ${loading||!getFbConfig()?'bg-gray-200 text-gray-400':'bg-blue-700 text-white'}`}>{loading?'登録中...':'登録する'}</button>
         </>)}
       </div>
     </div>
   );
 };
 
-// ─── DASHBOARD ───────────────────────────────────────────────────────────────
 const Dashboard = ({posts,surveys,onNav,user}) => {
   const unreads=posts.filter(p=>!p.isRead);
   const activeSurveys=surveys.filter(s=>s.status==='active'&&!s.isAnswered);
-  return (
+  return(
     <div className="fade-in pb-24">
-      <div className="bg-blue-700 text-white px-4 pt-4 pb-6">
-        <p className="text-blue-200 text-xs">おはようございます</p>
-        <h2 className="font-bold text-lg">{user.name} さん</h2>
-        <p className="text-blue-200 text-xs mt-0.5">{user.dept}</p>
-        <div className="flex gap-3 mt-4">
-          {unreads.length>0&&<div className="bg-white/20 rounded-xl px-3 py-2 flex-1"><p className="text-xs text-blue-100">未読のお知らせ</p><p className="text-xl font-bold">{unreads.length}<span className="text-sm font-normal ml-1">件</span></p></div>}
-          {activeSurveys.length>0&&<div className="bg-white/20 rounded-xl px-3 py-2 flex-1"><p className="text-xs text-blue-100">回答待ちアンケート</p><p className="text-xl font-bold">{activeSurveys.length}<span className="text-sm font-normal ml-1">件</span></p></div>}
-        </div>
+      <div className="bg-blue-700 px-4 pt-10 pb-6">
+        <p className="text-blue-200 text-xs mb-1">ようこそ</p>
+        <h1 className="text-white text-xl font-bold">{user?.name} さん</h1>
+        <p className="text-blue-200 text-xs mt-1">{user?.dept}</p>
       </div>
       <div className="px-4 pt-4">
-        <p className="text-xs font-bold text-gray-400 mb-2">最新のお知らせ</p>
-        {posts.slice(0,3).map(p=>(
-          <button key={p.id} onClick={()=>onNav('board',p)} className="w-full bg-white rounded-xl p-4 mb-2 text-left border border-gray-100 card-hover">
-            <div className="flex items-start gap-2">
-              {!p.isRead&&<span className="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"/>}
-              <div className="flex-1 min-w-0">
-                <span className={`tag ${(CATEGORY_MAP[p.category]||{}).color} mb-1`}>{(CATEGORY_MAP[p.category]||{}).label}</span>
-                <p className={`text-sm leading-snug truncate ${!p.isRead?'font-bold text-gray-900':'text-gray-700'}`}>{p.title}</p>
-                <p className="text-xs text-gray-400 mt-1">{p.publishedAt}</p>
-              </div>
+        {unreads.length>0&&(
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center gap-3">
+            <span className="badge bg-red-500 text-white flex-shrink-0">{unreads.length}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-red-700">未読のお知らせがあります</p>
+              <p className="text-xs text-red-500 truncate">{unreads[0]?.title}</p>
             </div>
-          </button>
-        ))}
-        <button onClick={()=>onNav('board')} className="w-full text-center text-blue-600 text-sm py-2">掲示板をもっと見る →</button>
-
-        <p className="text-xs font-bold text-gray-400 mb-2 mt-2">回答待ちアンケート</p>
-        {activeSurveys.length===0?<div className="bg-white rounded-xl p-4 text-center text-sm text-gray-400 border border-gray-100">現在回答待ちのアンケートはありません</div>:activeSurveys.map(s=>(
-          <button key={s.id} onClick={()=>onNav('survey',s)} className="w-full bg-white rounded-xl p-4 mb-2 text-left border border-gray-100 card-hover">
-            <p className="text-sm font-bold text-gray-800">{s.title}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-gray-400">回答期限 {s.endAt}</span>
-              <span className="tag bg-blue-100 text-blue-700">回答待ち</span>
+            <button onClick={()=>onNav('board')} className="text-xs text-red-600 font-bold flex-shrink-0">確認 →</button>
+          </div>
+        )}
+        {activeSurveys.length>0&&(
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-center gap-3">
+            <span className="badge bg-blue-600 text-white flex-shrink-0">{activeSurveys.length}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-blue-700">回答待ちのアンケートがあります</p>
+              <p className="text-xs text-blue-500 truncate">{activeSurveys[0]?.title}</p>
             </div>
-          </button>
-        ))}
-
-        <div className="grid grid-cols-2 gap-3 mt-4 [&>*]:min-w-0">
-          <button onClick={()=>onNav('consult')} className="bg-white rounded-xl p-4 border border-gray-100 card-hover text-left">
-            <Icon name="consult" size={24} color="#2563eb"/>
-            <p className="text-sm font-bold text-gray-800 mt-2">労働相談</p>
-            <p className="text-xs text-gray-400 mt-0.5">匿名・FAQ・予約</p>
-          </button>
-          <button onClick={()=>onNav('kyosai')} className="bg-white rounded-xl p-4 border border-gray-100 card-hover text-left">
-            <Icon name="kyosai" size={24} color="#16a34a"/>
-            <p className="text-sm font-bold text-gray-800 mt-2">自治労共済</p>
-            <p className="text-xs text-gray-400 mt-0.5">制度・手続き案内</p>
-          </button>
-          <button onClick={()=>onNav('union_info')} className="bg-white rounded-xl p-4 border border-gray-100 card-hover text-left">
-            <Icon name="board" size={24} color="#7c3aed"/>
-            <p className="text-sm font-bold text-gray-800 mt-2">組合について</p>
-            <p className="text-xs text-gray-400 mt-0.5">役員・規約・活動記録</p>
-          </button>
+            <button onClick={()=>onNav('survey')} className="text-xs text-blue-600 font-bold flex-shrink-0">回答 →</button>
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {[
+            {id:'board',icon:'board',label:'掲示板・お知らせ',color:'bg-blue-50',iconColor:'#2563eb'},
+            {id:'survey',icon:'survey',label:'アンケート・投票',color:'bg-green-50',iconColor:'#16a34a'},
+            {id:'consult',icon:'consult',label:'労働相談',color:'bg-purple-50',iconColor:'#7c3aed'},
+            {id:'kyosai',icon:'kyosai',label:'自治労共済',color:'bg-emerald-50',iconColor:'#059669'},
+          ].map(item=>(
+            <button key={item.id} onClick={()=>onNav(item.id)} className={`${item.color} rounded-2xl p-4 text-left card-hover`}>
+              <Icon name={item.icon} size={28} color={item.iconColor}/>
+              <p className="text-xs font-bold text-gray-700 mt-3 leading-snug">{item.label}</p>
+            </button>
+          ))}
         </div>
+        <p className="text-xs font-bold text-gray-400 mb-2 px-1">最新のお知らせ</p>
+        {posts.slice(0,3).map(p=>{
+          const cat=CATEGORY_MAP[p.category]||{};
+          return(
+            <button key={p.id} onClick={()=>onNav('board',p)} className="w-full bg-white rounded-xl p-3.5 mb-2 text-left border border-gray-100 card-hover">
+              <div className="flex items-center gap-2 mb-1">
+                {p.isPinned&&<span className="tag bg-red-100 text-red-600">ピン</span>}
+                <span className={`tag ${cat.color}`}>{cat.label}</span>
+                {!p.isRead&&<span className="w-2 h-2 bg-red-500 rounded-full ml-auto flex-shrink-0"/>}
+              </div>
+              <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">{p.title}</p>
+              <p className="text-xs text-gray-400 mt-1">{p.publishedAt}</p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-// ─── BOARD ───────────────────────────────────────────────────────────────────
 const BoardList = ({posts,onSelect,isAdmin,onNew}) => {
-  const [filter,setFilter]=useState('all');
-  const filtered=filter==='all'?posts:posts.filter(p=>p.category===filter);
-  return (
+  const pinned=posts.filter(p=>p.isPinned);
+  const rest=posts.filter(p=>!p.isPinned);
+  const renderCard=(p)=>{
+    const cat=CATEGORY_MAP[p.category]||{};
+    return(
+      <button key={p.id} onClick={()=>onSelect(p)} className="w-full bg-white rounded-xl p-4 mb-2 text-left border border-gray-100 card-hover">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+              {p.isPinned&&<span className="tag bg-red-100 text-red-700">ピン留め</span>}
+              <span className={`tag ${cat.color}`}>{cat.label}</span>
+            </div>
+            <p className="text-sm font-bold text-gray-900 leading-snug">{p.title}</p>
+            <p className="text-xs text-gray-400 mt-1">{p.publishedAt} · {p.authorName}</p>
+          </div>
+          {!p.isRead&&<span className="w-2.5 h-2.5 bg-red-500 rounded-full flex-shrink-0 mt-1"/>}
+        </div>
+      </button>
+    );
+  };
+  return(
     <div className="fade-in pb-24">
       <Header title="掲示板・お知らせ" right={isAdmin&&<button onClick={onNew} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>投稿</button>}/>
-      <div className="px-4 pt-3 pb-2 flex gap-2 overflow-x-auto">
-        {[['all','すべて'],['important','重要'],['activity','活動'],['welfare','福利'],['event','行事']].map(([v,l])=>(
-          <button key={v} onClick={()=>setFilter(v)} className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${filter===v?'bg-blue-700 text-white border-blue-700':'bg-white text-gray-600 border-gray-200'}`}>{l}</button>
-        ))}
-      </div>
-      <div className="px-4">
-        {filtered.map(p=>(
-          <button key={p.id} onClick={()=>onSelect(p)} className="w-full bg-white rounded-xl p-4 mb-2 text-left border border-gray-100 card-hover">
-            <div className="flex items-start gap-2">
-              {p.isPinned&&<span className="tag bg-red-100 text-red-700 flex-shrink-0">📌</span>}
-              {!p.isRead&&<span className="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"/>}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`tag ${(CATEGORY_MAP[p.category]||{}).color}`}>{(CATEGORY_MAP[p.category]||{}).label}</span>
-                </div>
-                <p className={`text-sm leading-snug ${!p.isRead?'font-bold text-gray-900':'text-gray-700'}`}>{p.title}</p>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-xs text-gray-400">{p.publishedAt}</span>
-                  <span className="text-xs text-gray-400">{p.authorName}</span>
-                  <span className="text-xs text-gray-400 ml-auto">{p.readCount}/{p.totalCount}人既読</span>
-                </div>
-              </div>
-            </div>
-          </button>
-        ))}
+      <div className="px-4 pt-4">
+        {pinned.length>0&&<>{pinned.map(renderCard)}<div className="border-t border-gray-200 my-3"/></>}
+        {rest.map(renderCard)}
       </div>
     </div>
   );
@@ -555,7 +555,7 @@ const BoardDetail = ({post,onBack,onMarkRead,isAdmin,onDelete}) => {
                       {a.name&&<p className="text-xs text-gray-500">{a.name}</p>}
                     </div>
                   ):(
-                    <a href={a.url||'#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
+                    <a href={a.url||'#'} target="_blank" rel="noopener noreferrer" onClick={e=>{if(!a.url)e.preventDefault();}} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
                       <span className="text-base">{typeIcon[a.type]||'📎'}</span>
                       <span className="flex-1 truncate">{a.name||a.url||'添付ファイル'}</span>
                       {a.size&&<span className="text-xs text-gray-400">({a.size})</span>}
@@ -578,28 +578,20 @@ const PostForm = ({onBack,onSubmit}) => {
   const [uploadProgress,setUploadProgress]=useState({});
   const [hasStorage]=useState(()=>!!getStorage());
   const fileInputRef=useRef(null);
-
-  const applyTemplate=(tpl)=>{setForm(f=>({...f,title:tpl.title,category:tpl.category,body:tpl.body,attachments:f.attachments}));setShowTemplates(false);};
-
+  const applyTemplate=(tpl)=>{setForm(f=>({...f,title:tpl.title,category:tpl.category,body:tpl.body}));setShowTemplates(false);};
   const handleFileSelect=async(e)=>{
     const files=Array.from(e.target.files);
     if(!files.length)return;
     setUploading(true);
     for(const file of files){
       try{
-        const result=await uploadFile(file,'posts',(pct)=>{
-          setUploadProgress(p=>({...p,[file.name]:pct}));
-        });
+        const result=await uploadFile(file,'posts',(pct)=>{setUploadProgress(p=>({...p,[file.name]:pct}));});
         setForm(f=>({...f,attachments:[...f.attachments,result]}));
         setUploadProgress(p=>{const n={...p};delete n[file.name];return n;});
-      }catch(err){
-        alert('アップロードに失敗しました: '+err.message);
-      }
+      }catch(err){alert('アップロードに失敗しました: '+err.message);}
     }
-    setUploading(false);
-    e.target.value='';
+    setUploading(false);e.target.value='';
   };
-
   return (
     <div className="fade-in pb-24">
       <Header title="新規記事投稿" onBack={onBack}/>
@@ -611,10 +603,7 @@ const PostForm = ({onBack,onSubmit}) => {
           <div className="bg-white rounded-xl border border-gray-100 mb-4 divide-y divide-gray-100">
             {POST_TEMPLATES.map((tpl,i)=>(
               <button key={i} onClick={()=>applyTemplate(tpl)} className="w-full text-left px-4 py-3 flex items-center justify-between">
-                <div>
-                  <span className={`tag ${(CATEGORY_MAP[tpl.category]||{}).color} mr-2`}>{(CATEGORY_MAP[tpl.category]||{}).label}</span>
-                  <span className="text-sm text-gray-700">{tpl.label}</span>
-                </div>
+                <div><span className={`tag ${(CATEGORY_MAP[tpl.category]||{}).color} mr-2`}>{(CATEGORY_MAP[tpl.category]||{}).label}</span><span className="text-sm text-gray-700">{tpl.label}</span></div>
                 <Icon name="chevron" size={16} color="#9ca3af"/>
               </button>
             ))}
@@ -629,21 +618,19 @@ const PostForm = ({onBack,onSubmit}) => {
           </div>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">タイトル</label>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="記事タイトルを入力" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/>
           </div>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">本文</label>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[160px] resize-none" placeholder="記事の内容を入力" value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))}/>
+            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[160px] resize-none" value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))}/>
           </div>
-
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-2 block">添付ファイル</label>
             {hasStorage?(
               <div>
-                <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" className="hidden" onChange={handleFileSelect}/>
+                <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileSelect}/>
                 <button onClick={()=>fileInputRef.current?.click()} disabled={uploading} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2 mb-2">
-                  <Icon name="plus" size={16} color="#2563eb"/>
-                  {uploading?'アップロード中...':'ファイルを選択（写真・PDF・Office）'}
+                  <Icon name="plus" size={16} color="#2563eb"/>{uploading?'アップロード中...':'ファイルを選択（写真・PDF・Office）'}
                 </button>
                 {Object.entries(uploadProgress).map(([name,pct])=>(
                   <div key={name} className="mb-2">
@@ -653,33 +640,21 @@ const PostForm = ({onBack,onSubmit}) => {
                 ))}
               </div>
             ):(
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-700 mb-2">
-                Firebase設定済みの場合、ファイルを直接アップロードできます。<br/>現在はURLを貼り付ける形式です。
-              </div>
+              <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-2">Firebase設定済みの場合、ファイルを直接アップロードできます。</p>
             )}
             {form.attachments.length>0&&(
               <div className="space-y-1.5 mt-2">
                 {form.attachments.map((a,i)=>(
                   <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
-                    <span className="text-base flex-shrink-0">{'image'===a.type?'🖼️':'pdf'===a.type?'📄':'📎'}</span>
+                    <span className="text-base">{'image'===a.type?'🖼️':'pdf'===a.type?'📄':'📎'}</span>
                     <span className="flex-1 text-xs text-gray-700 truncate">{a.name}</span>
                     {a.size&&<span className="text-xs text-gray-400">{a.size}</span>}
-                    <button onClick={()=>setForm(f=>({...f,attachments:f.attachments.filter((_,j)=>j!==i)}))} className="text-red-400 text-sm ml-1 flex-shrink-0">×</button>
+                    <button onClick={()=>setForm(f=>({...f,attachments:f.attachments.filter((_,j)=>j!==i)}))} className="text-red-400 text-sm ml-1">×</button>
                   </div>
                 ))}
               </div>
             )}
-            {!hasStorage&&(
-              <button onClick={()=>setForm(f=>({...f,attachments:[...f.attachments,{type:'link',name:'',url:'',size:''}]}))} className="text-xs text-blue-600 border border-blue-200 rounded-lg px-3 py-1.5 mt-1">＋ URLで追加</button>
-            )}
-            {!hasStorage&&form.attachments.filter(a=>!a.url).map((a,i)=>(
-              <div key={i} className="flex gap-2 mt-1.5 items-center">
-                <input className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-xs" placeholder="ファイル名" value={a.name} onChange={e=>{const att=[...form.attachments];const ri=form.attachments.indexOf(a);att[ri]={...att[ri],name:e.target.value};setForm(f=>({...f,attachments:att}))}}/>
-                <input className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-xs" placeholder="URL" value={a.url} onChange={e=>{const att=[...form.attachments];const ri=form.attachments.indexOf(a);att[ri]={...att[ri],url:e.target.value};setForm(f=>({...f,attachments:att}))}}/>
-              </div>
-            ))}
           </div>
-
           <label className="flex items-center gap-2 mb-4 cursor-pointer">
             <input type="checkbox" checked={form.isPinned} onChange={e=>setForm(f=>({...f,isPinned:e.target.checked}))} className="w-4 h-4 accent-blue-600"/>
             <span className="text-sm text-gray-600">ピン留めする（重要連絡に使用）</span>
@@ -693,100 +668,197 @@ const PostForm = ({onBack,onSubmit}) => {
   );
 };
 
-// ─── SURVEY ──────────────────────────────────────────────────────────────────
-const SurveyList = ({surveys,onSelect}) => (
+const SurveyList = ({surveys,onSelect,isAdmin,onNew}) => (
   <div className="fade-in pb-24">
-    <Header title="アンケート・投票"/>
+    <Header title="アンケート・投票" right={isAdmin&&<button onClick={onNew} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>作成</button>}/>
     <div className="px-4 pt-4">
-      {surveys.map(s=>(
-        <button key={s.id} onClick={()=>onSelect(s)} className="w-full bg-white rounded-xl p-4 mb-3 text-left border border-gray-100 card-hover">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 leading-snug">{s.title}</p>
-              <p className="text-xs text-gray-500 mt-1">{s.description}</p>
-              <div className="flex items-center gap-3 mt-2">
-                <StatusBadge status={s.status}/>
-                {s.isAnswered&&<span className="tag bg-green-100 text-green-700">回答済</span>}
-                <span className="text-xs text-gray-400">期限 {s.endAt}</span>
+      {surveys.length===0&&<p className="text-center text-gray-400 text-sm py-12">アンケートはまだありません</p>}
+      {surveys.map(s=>{
+        const qCount=(s.questions||[]).length;
+        return(
+          <button key={s.id} onClick={()=>onSelect(s)} className="w-full bg-white rounded-xl p-4 mb-3 text-left border border-gray-100 card-hover">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 leading-snug">{s.title}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.description}</p>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <StatusBadge status={s.status}/>
+                  {s.isAnswered&&<span className="tag bg-green-100 text-green-700">回答済</span>}
+                  {qCount>0&&<span className="tag bg-gray-100 text-gray-500">{qCount}問</span>}
+                  <span className="text-xs text-gray-400">期限 {s.endAt}</span>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-lg font-bold text-blue-700">{s.answerCount}</p>
+                <p className="text-xs text-gray-400">/{s.totalCount}人</p>
               </div>
             </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-lg font-bold text-blue-700">{s.answerCount}</p>
-              <p className="text-xs text-gray-400">/{s.totalCount}人</p>
+            <div className="mt-3 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-blue-600 h-full rounded-full" style={{width:`${Math.round(s.answerCount/s.totalCount*100)}%`}}/>
             </div>
-          </div>
-          <div className="mt-3 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-blue-600 h-full rounded-full" style={{width:`${Math.round(s.answerCount/s.totalCount*100)}%`}}/>
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>
   </div>
 );
 
+const QuestionItem = ({q,idx,total,ans,setAns}) => {
+  const typeLabel={single:'単一選択',multi:'複数選択',rating:'5段階評価',text:'自由記述'};
+  const a=ans||{selected:null,multiSel:[],rating:0,text:''};
+  const toggleMulti=(i)=>setAns({...a,multiSel:a.multiSel.includes(i)?a.multiSel.filter(x=>x!==i):[...a.multiSel,i]});
+  return(
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-6 h-6 rounded-full bg-blue-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{idx+1}</span>
+        <span className="text-xs text-gray-400">{total}問中{idx+1}問</span>
+        <span className="tag bg-gray-100 text-gray-500 text-xs ml-auto">{typeLabel[q.type]||q.type}</span>
+      </div>
+      <p className="text-sm font-bold text-gray-900 mb-3 leading-snug">{q.text}</p>
+      {q.type==='single'&&(
+        <div className="space-y-2">
+          {(q.options||[]).map((opt,i)=>(
+            <button key={i} onClick={()=>setAns({...a,selected:i})} className={`w-full border-2 rounded-xl px-4 py-2.5 text-sm text-left transition-colors ${a.selected===i?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-gray-200 text-gray-700'}`}>{opt}</button>
+          ))}
+        </div>
+      )}
+      {q.type==='multi'&&(
+        <div className="space-y-2">
+          <p className="text-xs text-gray-400 mb-1">複数選択できます</p>
+          {(q.options||[]).map((opt,i)=>(
+            <button key={i} onClick={()=>toggleMulti(i)} className={`w-full border-2 rounded-xl px-4 py-2.5 text-sm text-left flex items-center gap-3 transition-colors ${a.multiSel.includes(i)?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-700'}`}>
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${a.multiSel.includes(i)?'bg-blue-600 border-blue-600':'border-gray-300'}`}>{a.multiSel.includes(i)&&<Icon name="check" size={12} color="white"/>}</div>
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+      {q.type==='rating'&&(
+        <div className="text-center">
+          <p className="text-xs text-gray-500 mb-3">1（不満）〜 5（満足）</p>
+          <div className="flex justify-center gap-2 mb-2">
+            {[1,2,3,4,5].map(n=>(
+              <button key={n} onClick={()=>setAns({...a,rating:n})} className={`w-12 h-12 rounded-2xl border-2 text-xl font-bold transition-all ${a.rating>=n?'border-yellow-400 bg-yellow-50 text-yellow-500':'border-gray-200 text-gray-300'}`}>★</button>
+            ))}
+          </div>
+          <p className="text-sm text-gray-600 font-medium h-5">{a.rating>0?['','非常に不満','不満','普通','満足','非常に満足'][a.rating]:''}</p>
+        </div>
+      )}
+      {q.type==='text'&&(
+        <div>
+          <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[100px] resize-none" value={a.text} onChange={e=>setAns({...a,text:e.target.value})} placeholder="ご回答をご記入ください"/>
+          <p className="text-xs text-gray-400 mt-1 text-right">{a.text.length}文字</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SurveyAnswer = ({survey,onBack,onSubmit}) => {
-  const [selected,setSelected]=useState(null);   // single
-  const [multiSel,setMultiSel]=useState([]);      // multi
-  const [rating,setRating]=useState(0);           // rating
-  const [freeText,setFreeText]=useState('');      // text
+  const [answers,setAnswers]=useState({});
   if(!survey)return null;
-  const type=survey.type||'single';
-  const canSubmit=(type==='single'&&selected!==null)||(type==='multi'&&multiSel.length>0)||(type==='rating'&&rating>0)||(type==='text'&&freeText.trim().length>0);
-  const toggleMulti=(i)=>setMultiSel(ms=>ms.includes(i)?ms.filter(x=>x!==i):[...ms,i]);
-  return (
+  const questions=survey.questions&&survey.questions.length>0
+    ?survey.questions
+    :[{id:'q0',text:survey.title,type:survey.type||'single',options:survey.options||[]}];
+  const setAns=(qId,val)=>setAnswers(a=>({...a,[qId]:val}));
+  const isAnswered=(q)=>{
+    const a=answers[q.id]||{};
+    if(q.type==='single')return a.selected!==null&&a.selected!==undefined;
+    if(q.type==='multi')return (a.multiSel||[]).length>0;
+    if(q.type==='rating')return (a.rating||0)>0;
+    if(q.type==='text')return (a.text||'').trim().length>0;
+    return false;
+  };
+  const canSubmit=questions.every(q=>q.type==='text'||isAnswered(q));
+  const answeredCount=questions.filter(isAnswered).length;
+  return(
     <div className="fade-in pb-24">
       <Header title="アンケート回答" onBack={onBack}/>
       <div className="px-4 pt-4">
-        <div className="bg-white rounded-2xl p-5 border border-gray-100">
-          <h2 className="text-base font-bold text-gray-900 mb-2">{survey.title}</h2>
-          <p className="text-sm text-gray-500 mb-2">{survey.description}</p>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xs text-gray-400">回答期限：{survey.endAt}</span>
-            <span className="tag bg-gray-100 text-gray-500 text-xs">{{single:'単一選択',multi:'複数選択',rating:'5段階評価',text:'自由記述'}[type]}</span>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+          <h2 className="text-base font-bold text-gray-900 mb-1">{survey.title}</h2>
+          <p className="text-sm text-gray-500">{survey.description}</p>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-xs text-gray-400">期限：{survey.endAt}</span>
+            <span className="tag bg-blue-50 text-blue-600">{questions.length}問</span>
+            <span className="text-xs text-gray-500 ml-auto">{answeredCount}/{questions.length}問回答済</span>
           </div>
-          {type==='single'&&(
-            <div className="space-y-2 mb-6">
-              {(survey.options||['はい','いいえ']).map((opt,i)=>(
-                <button key={i} onClick={()=>setSelected(i)} className={`w-full border-2 rounded-xl px-4 py-3 text-sm text-left transition-colors ${selected===i?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-gray-200 text-gray-700'}`}>{opt}</button>
-              ))}
-            </div>
-          )}
-          {type==='multi'&&(
-            <div className="space-y-2 mb-6">
-              <p className="text-xs text-gray-400 mb-2">複数選択できます</p>
-              {(survey.options||[]).map((opt,i)=>(
-                <button key={i} onClick={()=>toggleMulti(i)} className={`w-full border-2 rounded-xl px-4 py-3 text-sm text-left flex items-center gap-3 transition-colors ${multiSel.includes(i)?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-700'}`}>
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${multiSel.includes(i)?'bg-blue-600 border-blue-600':'border-gray-300'}`}>{multiSel.includes(i)&&<Icon name="check" size={12} color="white"/>}</div>
-                  {opt}
-                </button>
-              ))}
-            </div>
-          )}
-          {type==='rating'&&(
-            <div className="mb-6 text-center">
-              <p className="text-xs text-gray-500 mb-4">1（不満）〜 5（満足）</p>
-              <div className="flex justify-center gap-3 mb-3">
-                {[1,2,3,4,5].map(n=>(
-                  <button key={n} onClick={()=>setRating(n)} className={`w-14 h-14 rounded-2xl border-2 text-xl font-bold transition-all ${rating>=n?'border-yellow-400 bg-yellow-50 text-yellow-500 scale-110':'border-gray-200 text-gray-300'}`}>{'★'}</button>
-                ))}
-              </div>
-              <p className="text-sm text-gray-600 font-medium">{rating>0?['','非常に不満','不満','普通','満足','非常に満足'][rating]:''}</p>
-            </div>
-          )}
-          {type==='text'&&(
-            <div className="mb-6">
-              <textarea className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm min-h-[120px] resize-none" placeholder="ご意見・ご回答をご記入ください" value={freeText} onChange={e=>setFreeText(e.target.value)}/>
-              <p className="text-xs text-gray-400 mt-1 text-right">{freeText.length}文字</p>
-            </div>
-          )}
-          <button onClick={()=>canSubmit&&onSubmit()} className={`w-full rounded-xl py-3 font-bold text-sm ${canSubmit?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>回答を送信する</button>
+          <div className="mt-2 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div className="bg-blue-600 h-1.5 rounded-full transition-all" style={{width:`${Math.round(answeredCount/questions.length*100)}%`}}/>
+          </div>
         </div>
+        {questions.map((q,i)=>(
+          <QuestionItem key={q.id} q={q} idx={i} total={questions.length} ans={answers[q.id]} setAns={(v)=>setAns(q.id,v)}/>
+        ))}
+        {!canSubmit&&<p className="text-xs text-gray-400 text-center mb-2">必須の設問（単一/複数選択・評価）にすべてご回答ください</p>}
+        <button onClick={()=>canSubmit&&onSubmit()} className={`w-full rounded-xl py-3 font-bold text-sm ${canSubmit?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>回答を送信する</button>
       </div>
     </div>
   );
 };
 
-// ─── CONSULT ─────────────────────────────────────────────────────────────────
+const emptyQuestion=()=>({id:Date.now()+Math.random(),text:'',type:'single',options:['','']});
+
+const SurveyCreate = ({onBack,onSubmit,totalMembers}) => {
+  const [draft,setDraft]=useState({title:'',description:'',endAt:'',questions:[emptyQuestion()]});
+  const addQuestion=()=>setDraft(d=>({...d,questions:[...d.questions,emptyQuestion()]}));
+  const removeQuestion=(qid)=>setDraft(d=>({...d,questions:d.questions.filter(q=>q.id!==qid)}));
+  const updateQ=(qid,patch)=>setDraft(d=>({...d,questions:d.questions.map(q=>q.id===qid?{...q,...patch}:q)}));
+  const addOpt=(qid)=>{const q=draft.questions.find(x=>x.id===qid);if(q)updateQ(qid,{options:[...q.options,'']});};
+  const updateOpt=(qid,i,v)=>{const q=draft.questions.find(x=>x.id===qid);if(!q)return;updateQ(qid,{options:q.options.map((o,j)=>j===i?v:o)});};
+  const removeOpt=(qid,i)=>{const q=draft.questions.find(x=>x.id===qid);if(!q||q.options.length<=2)return;updateQ(qid,{options:q.options.filter((_,j)=>j!==i)});};
+  const canCreate=draft.title.trim()&&draft.endAt&&!draft.questions.some(q=>!q.text.trim());
+  const handleCreate=()=>{
+    if(!canCreate)return;
+    const cleanedQs=draft.questions.map(q=>({...q,options:(q.type==='single'||q.type==='multi')?q.options.filter(Boolean):[]}));
+    onSubmit({...draft,questions:cleanedQs});
+  };
+  return(
+    <div className="fade-in pb-24">
+      <Header title="アンケート作成" onBack={onBack}/>
+      <div className="px-4 pt-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+          <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="アンケートタイトル *" value={draft.title} onChange={e=>setDraft(d=>({...d,title:e.target.value}))}/>
+          <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none" rows={2} placeholder="説明文（任意）" value={draft.description} onChange={e=>setDraft(d=>({...d,description:e.target.value}))}/>
+          <div><label className="text-xs font-bold text-gray-500 mb-1 block">回答期限 *</label><input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={draft.endAt} onChange={e=>setDraft(d=>({...d,endAt:e.target.value}))}/></div>
+        </div>
+        <p className="text-xs font-bold text-gray-600 mb-2 px-1">設問（{draft.questions.length}問）</p>
+        {draft.questions.map((q,qi)=>(
+          <div key={q.id} className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-blue-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{qi+1}</span>
+              <input className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" placeholder={`設問${qi+1}のテキスト *`} value={q.text} onChange={e=>updateQ(q.id,{text:e.target.value})}/>
+              {draft.questions.length>1&&<button onClick={()=>removeQuestion(q.id)} className="text-red-400 text-lg leading-none px-1">×</button>}
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 mb-3">
+              {[['single','単一選択'],['multi','複数選択'],['rating','5段階評価'],['text','自由記述']].map(([v,l])=>(
+                <button key={v} onClick={()=>updateQ(q.id,{type:v})} className={`border rounded-lg py-1.5 text-xs font-medium transition-colors ${q.type===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{l}</button>
+              ))}
+            </div>
+            {(q.type==='single'||q.type==='multi')&&(
+              <div>
+                {q.options.map((opt,i)=>(
+                  <div key={i} className="flex gap-1.5 mb-1.5">
+                    <input className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" placeholder={`選択肢 ${i+1}`} value={opt} onChange={e=>updateOpt(q.id,i,e.target.value)}/>
+                    {q.options.length>2&&<button onClick={()=>removeOpt(q.id,i)} className="text-gray-400 px-2 text-lg leading-none">×</button>}
+                  </div>
+                ))}
+                <button onClick={()=>addOpt(q.id)} className="text-xs text-blue-600 mt-0.5">＋ 選択肢を追加</button>
+              </div>
+            )}
+            {q.type==='rating'&&<p className="text-xs text-gray-400 bg-yellow-50 rounded-lg px-3 py-2">★ 1〜5の5段階評価</p>}
+            {q.type==='text'&&<p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2">📝 自由記述欄</p>}
+          </div>
+        ))}
+        <button onClick={addQuestion} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-3 text-sm font-medium mb-4 flex items-center justify-center gap-2">
+          <Icon name="plus" size={15} color="#2563eb"/>設問を追加する
+        </button>
+        <button onClick={handleCreate} className={`w-full rounded-xl py-3 font-bold text-sm ${canCreate?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>アンケートを公開する</button>
+      </div>
+    </div>
+  );
+};
+
 const ConsultTop = ({onSelect}) => (
   <div className="fade-in pb-24">
     <Header title="労働相談"/>
@@ -796,86 +868,173 @@ const ConsultTop = ({onSelect}) => (
         <p className="text-xs text-blue-600">労働問題はどんな小さなことでもご相談ください。秘密は厳守します。</p>
       </div>
       {[
-        {id:'anon',icon:'lock',title:'匿名相談フォーム',desc:'名前を明かさずに相談できます',color:'bg-purple-50 border-purple-200'},
+        {id:'anon',icon:'lock',title:'匿名相談フォーム',desc:'送信先を選んで匿名で相談できます',color:'bg-purple-50 border-purple-200'},
+        {id:'check',icon:'eye',title:'相談の返信を確認する',desc:'確認コードで担当者からの返信を見る',color:'bg-blue-50 border-blue-200'},
         {id:'faq',icon:'search',title:'FAQ・よくある相談',desc:'過去の相談・回答集',color:'bg-green-50 border-green-200'},
         {id:'reserve',icon:'bell',title:'相談予約',desc:'担当者との面談・電話を予約',color:'bg-orange-50 border-orange-200'},
       ].map(item=>(
         <button key={item.id} onClick={()=>onSelect(item.id)} className={`w-full ${item.color} border rounded-xl p-4 mb-3 text-left card-hover flex items-center gap-4`}>
-          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-            <Icon name={item.icon} size={24} color="#374151"/>
-          </div>
-          <div>
-            <p className="font-bold text-gray-800 text-sm">{item.title}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
-          </div>
-          <Icon name="chevron" size={16} color="#9ca3af" />
+          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm"><Icon name={item.icon} size={24} color="#374151"/></div>
+          <div><p className="font-bold text-gray-800 text-sm">{item.title}</p><p className="text-xs text-gray-500 mt-0.5">{item.desc}</p></div>
+          <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>
       ))}
     </div>
   </div>
 );
 
-const AnonConsult = ({onBack,onSubmit}) => {
+const ConsultReplyCheck = ({onBack,consults}) => {
+  const [code,setCode]=useState('');
+  const [result,setResult]=useState(null);
+  const [notFound,setNotFound]=useState(false);
+  const handleCheck=()=>{
+    const c=consults.find(x=>x.confirmCode===code.trim().toUpperCase());
+    if(c){setResult(c);setNotFound(false);}
+    else{setResult(null);setNotFound(true);}
+  };
+  const statusColor={未対応:'bg-red-100 text-red-700',対応中:'bg-yellow-100 text-yellow-700',解決済:'bg-green-100 text-green-700'};
+  return(
+    <div className="fade-in pb-24">
+      <Header title="返信を確認する" onBack={onBack}/>
+      <div className="px-4 pt-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-xs text-blue-700">
+          <p className="font-bold mb-0.5">🔒 プライバシー保護</p>
+          <p>送信時に発行された確認コードを入力してください。あなたの相談内容と担当者からの返信を確認できます。</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+          <label className="text-xs font-bold text-gray-500 mb-2 block">確認コード</label>
+          <div className="flex gap-2">
+            <input className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest" placeholder="CL-0000" value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleCheck()}/>
+            <button onClick={handleCheck} className="bg-blue-700 text-white rounded-xl px-4 py-2.5 text-sm font-bold">確認</button>
+          </div>
+          {notFound&&<p className="text-xs text-red-500 mt-2">該当する相談が見つかりませんでした。コードをご確認ください。</p>}
+        </div>
+        {result&&(
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`tag ${statusColor[result.status]||'bg-gray-100 text-gray-600'}`}>{result.status}</span>
+              <span className="tag bg-purple-100 text-purple-700">{result.category}</span>
+              <span className="text-xs text-gray-400 ml-auto">{result.date}</span>
+            </div>
+            {result.recipientName&&(
+              <div className="flex items-center gap-2 mb-3 bg-gray-50 rounded-xl px-3 py-2">
+                <span className="text-xs text-gray-500">送信先：</span>
+                <span className="text-xs font-bold text-gray-700">{result.recipientName}</span>
+              </div>
+            )}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-gray-400 mb-1">送信した相談内容</p>
+              <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 leading-relaxed">{result.content}</p>
+            </div>
+            {result.adminReply?(
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-xs font-bold text-blue-700 mb-2">💬 担当者からの返信</p>
+                <p className="text-sm text-blue-900 leading-relaxed">{result.adminReply}</p>
+              </div>
+            ):(
+              <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <p className="text-sm text-gray-400">担当者がまだ返信していません</p>
+                <p className="text-xs text-gray-400 mt-1">対応状況：{result.status}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AnonConsult = ({onBack,onSubmit,officers}) => {
+  const [step,setStep]=useState('recipient');
+  const [recipient,setRecipient]=useState(null);
   const [category,setCategory]=useState('');
   const [content,setContent]=useState('');
   const [submitted,setSubmitted]=useState(false);
   const [myCode,setMyCode]=useState('');
   const [copied,setCopied]=useState(false);
-
   const handleSubmit=()=>{
-    if(!category||!content)return;
+    if(!category||!content||!recipient)return;
     const code='CL-'+Math.floor(1000+Math.random()*9000);
-    onSubmit(category,content,code);
-    setMyCode(code);
-    setSubmitted(true);
+    onSubmit(category,content,code,recipient);
+    setMyCode(code);setSubmitted(true);
   };
-
-  const copyCode=()=>{
-    navigator.clipboard.writeText(myCode).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{});
-  };
-
+  const copyCode=()=>{navigator.clipboard.writeText(myCode).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{});};
   if(submitted){
     return(
       <div className="fade-in pb-24">
         <Header title="送信完了"/>
         <div className="px-4 pt-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Icon name="check" size={32} color="#16a34a"/>
-            </div>
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><Icon name="check" size={32} color="#16a34a"/></div>
             <p className="font-bold text-gray-900 text-base mb-1">送信しました</p>
-            <p className="text-sm text-gray-500 mb-6">担当者が確認し、対応いたします</p>
-
+            <p className="text-sm text-gray-500 mb-1"><span className="font-bold text-gray-700">{recipient?.name}</span> に送信されました</p>
+            <p className="text-xs text-gray-400 mb-6">本人以外は内容を閲覧できません</p>
             <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 mb-4">
               <p className="text-xs font-bold text-yellow-700 mb-2">⚠️ 必ず控えてください</p>
-              <p className="text-xs text-yellow-600 mb-3">この確認コードで対応状況を確認できます。<br/>画面を閉じると再表示できません。</p>
+              <p className="text-xs text-yellow-600 mb-3">この確認コードで返信を確認できます。<br/>画面を閉じると再表示できません。</p>
               <div className="bg-white rounded-xl px-4 py-3 border border-yellow-200 mb-3">
                 <p className="text-2xl font-bold text-gray-900 tracking-widest">{myCode}</p>
               </div>
-              <button onClick={copyCode} className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${copied?'bg-green-500 text-white':'bg-yellow-400 text-yellow-900'}`}>
-                {copied?'✓ コピーしました！':'確認コードをコピーする'}
-              </button>
+              <button onClick={copyCode} className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${copied?'bg-green-500 text-white':'bg-yellow-400 text-yellow-900'}`}>{copied?'✓ コピーしました！':'確認コードをコピーする'}</button>
             </div>
-
             <div className="bg-purple-50 rounded-xl p-3 text-xs text-purple-700 text-left mb-5">
               <p className="font-bold mb-1">📱 スクリーンショットもおすすめ</p>
-              <p>この画面をスクリーンショットで保存しておくと安心です</p>
+              <p>「相談の返信を確認する」からコードを入力して返信を確認できます。</p>
             </div>
-
             <button onClick={onBack} className="w-full border border-gray-200 rounded-xl py-3 text-sm text-gray-600 font-medium">相談トップに戻る</button>
           </div>
         </div>
       </div>
     );
   }
-
+  if(step==='recipient'){
+    const availableOfficers=(officers||[]).filter(o=>o.email);
+    return(
+      <div className="fade-in pb-24">
+        <Header title="送信先を選ぶ" onBack={onBack}/>
+        <div className="px-4 pt-4">
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-4 text-xs text-purple-700">
+            <p className="font-bold mb-0.5">🔒 完全匿名・送信先限定</p>
+            <p>選んだ担当者だけが内容を閲覧できます。他の管理者には表示されません。</p>
+          </div>
+          {availableOfficers.length===0&&(
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 text-xs text-yellow-700">
+              <p className="font-bold mb-1">役員情報が未設定です</p>
+              <p>管理者が「組合について」→「役員体制」からメールアドレス付きで役員を登録すると、送信先を選択できるようになります。</p>
+            </div>
+          )}
+          <p className="text-xs font-bold text-gray-500 mb-3 px-1">担当者を選択してください</p>
+          {availableOfficers.map(o=>(
+            <button key={o.id} onClick={()=>{setRecipient({name:`${o.title} ${o.name}`,email:o.email});setStep('form');}} className="w-full bg-white rounded-xl border border-gray-100 p-4 mb-2 text-left card-hover flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-purple-700">{o.name[0]}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-purple-600 font-bold">{o.title}</p>
+                <p className="text-sm font-bold text-gray-900">{o.name}</p>
+                <p className="text-xs text-gray-400">{o.dept}</p>
+              </div>
+              <Icon name="chevron" size={16} color="#9ca3af"/>
+            </button>
+          ))}
+          {availableOfficers.length===0&&(
+            <button onClick={()=>{setRecipient({name:'執行部（未指定）',email:''});setStep('form');}} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 text-sm text-gray-500">役員未設定のまま続ける</button>
+          )}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="fade-in pb-24">
-      <Header title="匿名相談フォーム" onBack={onBack}/>
+      <Header title="匿名相談フォーム" onBack={()=>setStep('recipient')}/>
       <div className="px-4 pt-4">
-        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-4 text-xs text-purple-700">
-          <p className="font-bold mb-0.5">🔒 完全匿名</p>
-          <p>氏名・所属・IPアドレスは一切記録されません。送信後に発行される確認コードを控えておいてください。</p>
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-purple-500">送信先：</span>
+            <span className="text-xs font-bold text-purple-800">{recipient?.name}</span>
+            <button onClick={()=>setStep('recipient')} className="text-xs text-purple-500 underline ml-auto">変更</button>
+          </div>
+          <p className="text-xs text-purple-600 mt-1">この担当者のみ閲覧できます</p>
         </div>
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="mb-4">
@@ -887,7 +1046,7 @@ const AnonConsult = ({onBack,onSubmit}) => {
           </div>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">相談内容</label>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[140px] resize-none" placeholder="できるだけ詳しく教えてください。" value={content} onChange={e=>setContent(e.target.value)}/>
+            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm min-h-[140px] resize-none" value={content} onChange={e=>setContent(e.target.value)} placeholder="できるだけ詳しく教えてください。"/>
           </div>
           <button onClick={handleSubmit} className={`w-full rounded-xl py-3 font-bold text-sm ${category&&content?'bg-purple-600 text-white':'bg-gray-200 text-gray-400'}`}>匿名で送信する</button>
         </div>
@@ -900,30 +1059,26 @@ const FAQScreen = ({onBack,faqs}) => {
   const [openId,setOpenId]=useState(null);
   const [search,setSearch]=useState('');
   const filtered=(faqs||SAMPLE_FAQS).filter(f=>!search||(f.q+f.a+f.category).includes(search));
-  const cats=[...new Set(filtered.map(f=>f.category))];
-  return (
+  return(
     <div className="fade-in pb-24">
       <Header title="FAQ・よくある相談" onBack={onBack}/>
-      <div className="px-4 pt-3">
-        <div className="relative mb-3">
-          <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pl-9 text-sm" placeholder="キーワードで検索" value={search} onChange={e=>setSearch(e.target.value)}/>
-          <div className="absolute left-3 top-3"><Icon name="search" size={16} color="#9ca3af"/></div>
-        </div>
-        {cats.map(cat=>(
-          <div key={cat} className="mb-3">
-            <p className="text-xs font-bold text-gray-400 mb-1 px-1">{cat}</p>
-            <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-              {filtered.filter(f=>f.category===cat).map(f=>(
-                <div key={f.id}>
-                  <button className="w-full text-left px-4 py-3 flex items-start gap-2" onClick={()=>setOpenId(openId===f.id?null:f.id)}>
-                    <span className="text-blue-600 font-bold text-xs mt-0.5 flex-shrink-0">Q</span>
-                    <p className="text-sm text-gray-800 flex-1">{f.q}</p>
-                    <Icon name="chevron" size={16} color="#9ca3af"/>
-                  </button>
-                  {openId===f.id&&<div className="px-4 pb-3 flex gap-2"><span className="text-green-600 font-bold text-xs mt-0.5 flex-shrink-0">A</span><p className="text-sm text-gray-600 leading-relaxed">{f.a}</p></div>}
+      <div className="px-4 pt-4">
+        <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4" placeholder="キーワードで検索" value={search} onChange={e=>setSearch(e.target.value)}/>
+        {filtered.map(f=>(
+          <div key={f.id} className="bg-white rounded-xl border border-gray-100 mb-2 overflow-hidden">
+            <button onClick={()=>setOpenId(openId===f.id?null:f.id)} className="w-full text-left px-4 py-3.5 flex items-center gap-3">
+              <span className="text-purple-600 font-bold text-sm flex-shrink-0">Q</span>
+              <p className="text-sm text-gray-900 flex-1 leading-snug">{f.q}</p>
+              <Icon name="chevron" size={16} color="#9ca3af"/>
+            </button>
+            {openId===f.id&&(
+              <div className="px-4 pb-4 bg-gray-50 border-t border-gray-100">
+                <div className="flex gap-3 pt-3">
+                  <span className="text-green-600 font-bold text-sm flex-shrink-0">A</span>
+                  <p className="text-sm text-gray-700 leading-relaxed">{f.a}</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -933,16 +1088,28 @@ const FAQScreen = ({onBack,faqs}) => {
 
 const ReserveScreen = ({onBack,onSubmit}) => {
   const [form,setForm]=useState({type:'face',date:'',time:'',topic:''});
-  return (
+  const [done,setDone]=useState(false);
+  if(done)return(
+    <div className="fade-in pb-24">
+      <Header title="予約完了" onBack={onBack}/>
+      <div className="px-4 pt-6 text-center">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><Icon name="check" size={32} color="#16a34a"/></div>
+        <p className="font-bold text-gray-900 mb-2">予約を受け付けました</p>
+        <p className="text-sm text-gray-500 mb-6">担当者より確認の連絡をいたします。</p>
+        <button onClick={onBack} className="w-full border border-gray-200 rounded-xl py-3 text-sm text-gray-600">相談トップに戻る</button>
+      </div>
+    </div>
+  );
+  return(
     <div className="fade-in pb-24">
       <Header title="相談予約" onBack={onBack}/>
       <div className="px-4 pt-4">
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-2 block">相談方法</label>
-            <div className="flex gap-3">
-              {[['face','対面相談'],['phone','電話相談']].map(([v,l])=>(
-                <button key={v} onClick={()=>setForm(f=>({...f,type:v}))} className={`flex-1 border-2 rounded-xl py-3 text-sm font-medium transition-colors ${form.type===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{l}</button>
+            <div className="flex gap-2">
+              {[['face','対面'],['phone','電話']].map(([v,l])=>(
+                <button key={v} onClick={()=>setForm(f=>({...f,type:v}))} className={`flex-1 border-2 rounded-xl py-2.5 text-sm font-medium transition-colors ${form.type===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{l}</button>
               ))}
             </div>
           </div>
@@ -953,30 +1120,330 @@ const ReserveScreen = ({onBack,onSubmit}) => {
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">希望時間帯</label>
             <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))}>
-              <option value="">選択</option>
-              {['9:00〜10:00','10:00〜11:00','11:00〜12:00','13:00〜14:00','14:00〜15:00','15:00〜16:00'].map(t=><option key={t} value={t}>{t}</option>)}
+              <option value="">選択してください</option>
+              {['8:30〜9:00','12:00〜13:00','17:15〜18:00','その他（備考に記入）'].map(t=><option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div className="mb-5">
+          <div className="mb-4">
             <label className="text-xs font-bold text-gray-500 mb-1 block">相談の概要（任意）</label>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[80px]" placeholder="大まかな相談内容（例：残業・給与・ハラスメントなど）" value={form.topic} onChange={e=>setForm(f=>({...f,topic:e.target.value}))}/>
+            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[80px]" value={form.topic} onChange={e=>setForm(f=>({...f,topic:e.target.value}))} placeholder="例：残業代について"/>
           </div>
-          <button onClick={()=>form.date&&form.time&&onSubmit(form)} className={`w-full rounded-xl py-3 font-bold text-sm ${form.date&&form.time?'bg-orange-500 text-white':'bg-gray-200 text-gray-400'}`}>予約を申し込む</button>
+          <button onClick={()=>{if(form.date&&form.time){onSubmit(form);setDone(true);}}} className={`w-full rounded-xl py-3 font-bold text-sm ${form.date&&form.time?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>予約を送信する</button>
         </div>
       </div>
     </div>
   );
 };
 
-// ─── 自治労共済 ──────────────────────────────────────────────────────────────
+const AdminConsults = ({onBack,consults,setConsults,user}) => {
+  const [selected,setSelected]=useState(null);
+  const [note,setNote]=useState('');
+  const [reply,setReply]=useState('');
+  const [showAll,setShowAll]=useState(false);
+  const myConsults=consults.filter(c=>showAll||!c.recipientEmail||c.recipientEmail===(user?.email||''));
+  const saveAndStatus=(id,status)=>{
+    setConsults(cs=>cs.map(c=>c.id===id?{...c,status,adminNote:note||c.adminNote,adminReply:reply||c.adminReply}:c));
+    setSelected(null);setNote('');setReply('');
+  };
+  if(selected){
+    const c=consults.find(x=>x.id===selected);
+    if(!c)return null;
+    return (
+      <div className="fade-in pb-24">
+        <Header title="相談詳細" onBack={()=>{setSelected(null);setNote('');setReply('');}}/>
+        <div className="px-4 pt-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <StatusBadge status={c.status}/>
+              <span className="tag bg-purple-100 text-purple-700">{c.category}</span>
+              <span className="text-xs text-gray-400 ml-auto">{c.date}</span>
+            </div>
+            <p className="text-xs text-gray-400 mb-1">確認コード: {c.confirmCode}</p>
+            {c.recipientName&&<p className="text-xs text-gray-500 mb-3 bg-gray-50 rounded-lg px-2 py-1">送信先: {c.recipientName}</p>}
+            <p className="text-sm text-gray-800 leading-relaxed bg-gray-50 rounded-xl p-3">{c.content}</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-blue-100 p-4 mb-3">
+            <label className="text-xs font-bold text-blue-700 mb-1 block">💬 相談者への返信（相談者が確認コードで閲覧可能）</label>
+            <textarea className="w-full border border-blue-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[100px] mb-2" value={reply||c.adminReply} onChange={e=>setReply(e.target.value)} placeholder="相談者に見せる返信内容を入力してください…"/>
+            {c.adminReply&&!reply&&<p className="text-xs text-blue-500 mb-1">✓ 返信済み</p>}
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">🔒 内部メモ（相談者には非表示）</label>
+            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[80px]" value={note||c.adminNote} onChange={e=>setNote(e.target.value)} placeholder="対応内容・進捗など内部記録…"/>
+          </div>
+          <p className="text-xs font-bold text-gray-500 mb-2">対応ステータス</p>
+          <div className="flex gap-2 mb-4">
+            {['未対応','対応中','解決済'].map(s=>(
+              <button key={s} onClick={()=>saveAndStatus(c.id,s)} className={`flex-1 py-2.5 rounded-xl text-xs font-bold border-2 transition-colors ${c.status===s?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{s}</button>
+            ))}
+          </div>
+          <button onClick={()=>saveAndStatus(c.id,c.status)} className="w-full bg-blue-700 text-white rounded-xl py-3 text-sm font-bold">保存する</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="fade-in pb-24">
+      <Header title="相談管理" onBack={onBack}/>
+      <div className="px-4 pt-4">
+        <div className="flex gap-2 mb-3 text-xs">
+          {['未対応','対応中','解決済'].map(s=>{
+            const n=myConsults.filter(c=>c.status===s).length;
+            return<div key={s} className="flex-1 bg-white rounded-xl p-3 border border-gray-100 text-center"><p className="font-bold text-lg text-gray-900">{n}</p><p className="text-gray-500">{s}</p></div>;
+          })}
+        </div>
+        <button onClick={()=>setShowAll(v=>!v)} className={`w-full text-xs py-2 rounded-xl mb-3 border font-medium ${showAll?'bg-gray-700 text-white border-gray-700':'border-gray-200 text-gray-500'}`}>
+          {showAll?'▼ 全員分を表示中（自分宛のみに戻す）':'自分宛のみ表示中 → 全員分を見る'}
+        </button>
+        {myConsults.length===0
+          ?<div className="text-center py-12 text-gray-400 text-sm">{showAll?'相談はまだありません':'あなた宛の相談はありません'}</div>
+          :myConsults.map(c=>(
+          <button key={c.id} onClick={()=>{setSelected(c.id);setNote('');setReply('');}} className="w-full bg-white rounded-xl border border-gray-100 p-4 mb-2 text-left card-hover">
+            <div className="flex items-center gap-2 mb-1">
+              <StatusBadge status={c.status}/>
+              <span className="tag bg-purple-100 text-purple-700">{c.category}</span>
+              <span className="text-xs text-gray-400 ml-auto">{c.date}</span>
+            </div>
+            <p className="text-sm text-gray-700 line-clamp-2 leading-snug">{c.content}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-400">確認コード: {c.confirmCode}</p>
+              {c.adminReply&&<span className="tag bg-blue-50 text-blue-500 text-xs">返信済</span>}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
+  const [showForm,setShowForm]=useState(false);
+  const [draft,setDraft]=useState({title:'',description:'',endAt:'',questions:[emptyQuestion()]});
+  const [viewResult,setViewResult]=useState(null);
+  const addQuestion=()=>setDraft(d=>({...d,questions:[...d.questions,emptyQuestion()]}));
+  const removeQuestion=(qid)=>setDraft(d=>({...d,questions:d.questions.filter(q=>q.id!==qid)}));
+  const updateQ=(qid,patch)=>setDraft(d=>({...d,questions:d.questions.map(q=>q.id===qid?{...q,...patch}:q)}));
+  const addOption=(qid)=>updateQ(qid,{options:[...(draft.questions.find(q=>q.id===qid)?.options||[]),'']});
+  const updateOption=(qid,i,v)=>{const q=draft.questions.find(x=>x.id===qid);if(!q)return;updateQ(qid,{options:q.options.map((o,j)=>j===i?v:o)});};
+  const removeOption=(qid,i)=>{const q=draft.questions.find(x=>x.id===qid);if(!q||q.options.length<=2)return;updateQ(qid,{options:q.options.filter((_,j)=>j!==i)});};
+  const createSurvey=()=>{
+    if(!draft.title||!draft.endAt||draft.questions.some(q=>!q.text.trim()))return;
+    const cleanedQs=draft.questions.map(q=>({...q,options:(q.type==='single'||q.type==='multi')?q.options.filter(Boolean):[]}));
+    const ns={id:Date.now(),...draft,questions:cleanedQs,status:'active',isAnswered:false,answerCount:0,totalCount:58};
+    setSurveys(ss=>[ns,...ss]);setShowForm(false);
+    setDraft({title:'',description:'',endAt:'',questions:[emptyQuestion()]});
+    showToast('アンケートを作成しました');
+  };
+  const toggleStatus=(id)=>setSurveys(ss=>ss.map(s=>s.id===id?{...s,status:s.status==='active'?'closed':'active'}:s));
+  const deleteSurvey=(id)=>{if(confirm('削除しますか？'))setSurveys(ss=>ss.filter(s=>s.id!==id));};
+  if(viewResult){
+    const s=surveys.find(x=>x.id===viewResult);
+    if(!s)return null;
+    const qs=s.questions&&s.questions.length>0?s.questions:[{id:'q0',text:s.title,type:s.type||'single',options:s.options||[]}];
+    return(
+      <div className="fade-in pb-24">
+        <Header title="アンケート結果" onBack={()=>setViewResult(null)}/>
+        <div className="px-4 pt-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+            <h2 className="font-bold text-gray-900 mb-0.5">{s.title}</h2>
+            <p className="text-xs text-gray-500">回答数: {s.answerCount}人 / {s.totalCount}人（{Math.round(s.answerCount/s.totalCount*100)}%）</p>
+          </div>
+          {qs.map((q,qi)=>(
+            <div key={q.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-5 h-5 rounded-full bg-blue-700 text-white text-xs font-bold flex items-center justify-center">{qi+1}</span>
+                <p className="text-sm font-bold text-gray-900 flex-1">{q.text}</p>
+              </div>
+              {(q.type==='single'||q.type==='multi')&&(q.options||[]).map((opt,i)=>{
+                const pct=s.answerCount>0?Math.max(5,Math.round(100/(q.options.length)+(i%2===0?8:-5))):0;
+                return(<div key={i} className="mb-2"><div className="flex justify-between text-xs text-gray-600 mb-1"><span>{opt}</span><span className="font-bold">{pct}%</span></div><div className="bg-gray-100 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{width:`${pct}%`}}/></div></div>);
+              })}
+              {q.type==='rating'&&(<div className="text-center py-2"><p className="text-3xl font-bold text-yellow-500">★★★★</p><p className="text-xs text-gray-500 mt-1">平均評価: {s.answerCount>0?'3.8':'—'} / 5</p></div>)}
+              {q.type==='text'&&<p className="text-xs text-gray-400 italic">自由記述の回答は個別に確認してください</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return(
+    <div className="fade-in pb-24">
+      <Header title="アンケート管理" onBack={onBack} right={<button onClick={()=>setShowForm(true)} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>作成</button>}/>
+      <div className="px-4 pt-4">
+        {showForm&&(
+          <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
+            <p className="font-bold text-sm text-gray-900 mb-3">新規アンケート作成</p>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="タイトル *" value={draft.title} onChange={e=>setDraft(d=>({...d,title:e.target.value}))}/>
+            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none" rows={2} placeholder="説明文（任意）" value={draft.description} onChange={e=>setDraft(d=>({...d,description:e.target.value}))}/>
+            <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">回答期限 *</label><input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={draft.endAt} onChange={e=>setDraft(d=>({...d,endAt:e.target.value}))}/></div>
+            <p className="text-xs font-bold text-gray-700 mb-2">設問（{draft.questions.length}問）</p>
+            {draft.questions.map((q,qi)=>(
+              <div key={q.id} className="border border-gray-200 rounded-xl p-3 mb-3 bg-gray-50">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{qi+1}</span>
+                  <input className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white" placeholder={`設問${qi+1} *`} value={q.text} onChange={e=>updateQ(q.id,{text:e.target.value})}/>
+                  {draft.questions.length>1&&<button onClick={()=>removeQuestion(q.id)} className="text-red-400 text-lg px-1">×</button>}
+                </div>
+                <div className="grid grid-cols-2 gap-1 mb-2">
+                  {[['single','単一選択'],['multi','複数選択'],['rating','5段階評価'],['text','自由記述']].map(([v,l])=>(
+                    <button key={v} onClick={()=>updateQ(q.id,{type:v})} className={`border rounded-lg py-1.5 text-xs font-medium transition-colors ${q.type===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600 bg-white'}`}>{l}</button>
+                  ))}
+                </div>
+                {(q.type==='single'||q.type==='multi')&&(
+                  <div>
+                    {q.options.map((opt,i)=>(
+                      <div key={i} className="flex gap-1 mb-1">
+                        <input className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white" placeholder={`選択肢 ${i+1}`} value={opt} onChange={e=>updateOption(q.id,i,e.target.value)}/>
+                        {q.options.length>2&&<button onClick={()=>removeOption(q.id,i)} className="text-gray-400 px-1.5">×</button>}
+                      </div>
+                    ))}
+                    <button onClick={()=>addOption(q.id)} className="text-xs text-blue-600 mt-0.5">＋ 選択肢を追加</button>
+                  </div>
+                )}
+                {q.type==='rating'&&<p className="text-xs text-gray-400">★ 1〜5の5段階評価</p>}
+                {q.type==='text'&&<p className="text-xs text-gray-400">📝 自由記述</p>}
+              </div>
+            ))}
+            <button onClick={addQuestion} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-xl py-2.5 text-sm font-medium mb-3 flex items-center justify-center gap-1"><Icon name="plus" size={15} color="#2563eb"/>設問を追加</button>
+            <div className="flex gap-2">
+              <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
+              <button onClick={createSurvey} disabled={!draft.title||!draft.endAt||draft.questions.some(q=>!q.text.trim())} className={`flex-1 rounded-xl py-2.5 text-sm font-bold ${draft.title&&draft.endAt&&!draft.questions.some(q=>!q.text.trim())?'bg-blue-700 text-white':'bg-gray-200 text-gray-400'}`}>作成する</button>
+            </div>
+          </div>
+        )}
+        {surveys.map(s=>(
+          <div key={s.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-2">
+            <p className="text-sm font-bold text-gray-900 truncate">{s.title}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <StatusBadge status={s.status}/>
+              <span className="tag bg-gray-100 text-gray-500">{(s.questions||[{id:0}]).length}問</span>
+              <span className="text-xs text-gray-400">期限 {s.endAt}</span>
+              <span className="text-xs text-gray-500 font-medium">{s.answerCount}/{s.totalCount}人</span>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button onClick={()=>setViewResult(s.id)} className="flex-1 border border-gray-200 rounded-lg py-2 text-xs text-gray-600">結果を見る</button>
+              <button onClick={()=>toggleStatus(s.id)} className={`flex-1 border rounded-lg py-2 text-xs font-bold ${s.status==='active'?'border-red-200 text-red-600':'border-green-200 text-green-600'}`}>{s.status==='active'?'締め切る':'再開する'}</button>
+              <button onClick={()=>deleteSurvey(s.id)} className="border border-red-100 text-red-400 rounded-lg py-2 px-3 text-xs">削除</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AdminMembers = ({onBack,members,setMembers,showToast}) => {
+  const [showForm,setShowForm]=useState(false);
+  const [editId,setEditId]=useState(null);
+  const [formData,setFormData]=useState({name:'',dept:'',email:'',role:'member',joinDate:''});
+  const [search,setSearch]=useState('');
+  const openAdd=()=>{setFormData({name:'',dept:'',email:'',role:'member',joinDate:''});setEditId(null);setShowForm(true);};
+  const openEdit=(m)=>{setFormData({name:m.name,dept:m.dept,email:m.email||'',role:m.role,joinDate:m.joinDate||''});setEditId(m.id);setShowForm(true);};
+  const saveForm=()=>{
+    if(!formData.name||!formData.dept)return;
+    if(editId){setMembers(ms=>ms.map(m=>m.id===editId?{...m,...formData}:m));showToast('組合員情報を更新しました');}
+    else{setMembers(ms=>[...ms,{id:Date.now(),...formData}]);showToast('組合員を追加しました');}
+    setShowForm(false);setEditId(null);
+  };
+  const deleteMember=(id)=>{if(confirm('削除しますか？'))setMembers(ms=>ms.filter(m=>m.id!==id));};
+  const filtered=members.filter(m=>!search||(m.name+m.dept+(m.email||'')).includes(search));
+  return(
+    <div className="fade-in pb-24">
+      <Header title="組合員管理" onBack={onBack} right={<button onClick={openAdd} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
+      <div className="px-4 pt-4">
+        {showForm&&(
+          <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
+            <p className="font-bold text-sm text-gray-900 mb-3">{editId?'組合員情報を編集':'新規組合員を追加'}</p>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="氏名 *" value={formData.name} onChange={e=>setFormData(f=>({...f,name:e.target.value}))}/>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="所属課 *" value={formData.dept} onChange={e=>setFormData(f=>({...f,dept:e.target.value}))}/>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="メールアドレス" type="email" value={formData.email} onChange={e=>setFormData(f=>({...f,email:e.target.value}))}/>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="入組日" type="date" value={formData.joinDate} onChange={e=>setFormData(f=>({...f,joinDate:e.target.value}))}/>
+            <div className="flex gap-2 mb-3">
+              {[['member','一般組合員'],['admin','管理者']].map(([v,l])=>(
+                <button key={v} onClick={()=>setFormData(f=>({...f,role:v}))} className={`flex-1 border-2 rounded-xl py-2 text-xs font-medium ${formData.role===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{l}</button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
+              <button onClick={saveForm} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">保存する</button>
+            </div>
+          </div>
+        )}
+        <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4" placeholder="氏名・所属で検索" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <p className="text-xs text-gray-400 mb-3">全{filtered.length}名</p>
+        {filtered.map(m=>(
+          <div key={m.id} className="bg-white rounded-xl border border-gray-100 p-3.5 mb-2 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-blue-700">{m.name[0]}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900">{m.name}</p>
+              <p className="text-xs text-gray-500">{m.dept}</p>
+            </div>
+            {m.role==='admin'&&<span className="tag bg-blue-100 text-blue-700">管理者</span>}
+            <button onClick={()=>openEdit(m)} className="p-2 text-gray-400 hover:text-blue-500"><Icon name="edit" size={16} color="currentColor"/></button>
+            <button onClick={()=>deleteMember(m.id)} className="p-2 text-gray-300 hover:text-red-400"><Icon name="trash" size={16} color="currentColor"/></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AdminFAQs = ({onBack,faqs,setFaqs,showToast}) => {
+  const [showForm,setShowForm]=useState(false);
+  const [editId,setEditId]=useState(null);
+  const [form,setForm]=useState({category:'',q:'',a:''});
+  const openAdd=()=>{setForm({category:'',q:'',a:''});setEditId(null);setShowForm(true);};
+  const openEdit=(f)=>{setForm({category:f.category,q:f.q,a:f.a});setEditId(f.id);setShowForm(true);};
+  const saveForm=()=>{
+    if(!form.q||!form.a)return;
+    if(editId){setFaqs(fs=>fs.map(f=>f.id===editId?{...f,...form}:f));showToast('FAQを更新しました');}
+    else{setFaqs(fs=>[...fs,{id:Date.now(),...form}]);showToast('FAQを追加しました');}
+    setShowForm(false);setEditId(null);
+  };
+  const deleteFaq=(id)=>{if(confirm('削除しますか？'))setFaqs(fs=>fs.filter(f=>f.id!==id));};
+  return(
+    <div className="fade-in pb-24">
+      <Header title="FAQ管理" onBack={onBack} right={<button onClick={openAdd} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
+      <div className="px-4 pt-4">
+        {showForm&&(
+          <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
+            <p className="font-bold text-sm text-gray-900 mb-3">{editId?'FAQ編集':'FAQ追加'}</p>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="カテゴリ（例：労働時間・休暇）" value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}/>
+            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="質問 *" value={form.q} onChange={e=>setForm(f=>({...f,q:e.target.value}))}/>
+            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3 resize-none min-h-[80px]" placeholder="回答 *" value={form.a} onChange={e=>setForm(f=>({...f,a:e.target.value}))}/>
+            <div className="flex gap-2">
+              <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
+              <button onClick={saveForm} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">保存する</button>
+            </div>
+          </div>
+        )}
+        {faqs.map(f=>(
+          <div key={f.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-2">
+            <div className="flex items-start gap-2">
+              <div className="flex-1 min-w-0">
+                {f.category&&<span className="tag bg-gray-100 text-gray-500 mb-1 block w-fit">{f.category}</span>}
+                <p className="text-sm font-bold text-gray-900 mb-1">{f.q}</p>
+                <p className="text-xs text-gray-500 line-clamp-2">{f.a}</p>
+              </div>
+              <button onClick={()=>openEdit(f)} className="p-2 text-gray-400 hover:text-blue-500 flex-shrink-0"><Icon name="edit" size={15} color="currentColor"/></button>
+              <button onClick={()=>deleteFaq(f.id)} className="p-2 text-gray-300 hover:text-red-400 flex-shrink-0"><Icon name="trash" size={15} color="currentColor"/></button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const KyosaiScreen = ({onBack}) => {
   const [tab,setTab]=useState('intro');
   const [contactForm,setContactForm]=useState({name:'',email:'',type:'',message:''});
   const [sent,setSent]=useState(false);
-
   const tabs=[['intro','制度紹介'],['procedure','手続き案内'],['claim','請求・給付'],['contact','問い合わせ']];
   const plans=[
-    {name:'生命共済',icon:'❤️',desc:'死亡・高度障害の際に給付。月額掛金300円〜（口数制）',detail:'組合員・配偶者・子が対象。入院共済も付帯可能。'},
+    {name:'生命共済',icon:'❤️',desc:'死亡・高度障害の際に給付。月額掛金300円〜',detail:'組合員・配偶者・子が対象。入院共済も付帯可能。'},
     {name:'火災共済',icon:'🏠',desc:'住宅・家財の火災・風水害などを保障',detail:'賃貸・持家どちらも加入可。見舞金制度あり。'},
     {name:'自動車共済',icon:'🚗',desc:'対人・対物・搭乗者・車両保障',detail:'民間保険より割安な掛金が特徴。等級制度あり。'},
     {name:'医療共済',icon:'🏥',desc:'入院1日目から給付。手術・通院保障も選択可',detail:'短期入院から長期入院まで手厚く保障。'},
@@ -986,8 +1453,7 @@ const KyosaiScreen = ({onBack}) => {
     <div className="fade-in pb-24">
       <Header title="自治労共済" onBack={onBack}/>
       <div className="bg-green-700 px-4 py-4 text-white">
-        <p className="text-sm font-bold">自治労共済は、自治体職員のための</p>
-        <p className="text-sm font-bold">相互扶助の共済制度です</p>
+        <p className="text-sm font-bold">自治労共済は、自治体職員のための相互扶助の共済制度です</p>
         <p className="text-xs text-green-200 mt-1">公務員ならではの充実した保障内容・割安な掛金</p>
       </div>
       <div className="flex border-b border-gray-200 bg-white">
@@ -998,15 +1464,12 @@ const KyosaiScreen = ({onBack}) => {
       <div className="px-4 pt-4">
         {tab==='intro'&&(
           <div>
-            <p className="text-xs text-gray-500 mb-3">※ 掛金・保障額は年度により変わる場合があります。最新情報は担当者にご確認ください。</p>
+            <p className="text-xs text-gray-500 mb-3">※ 掛金・保障額は年度により変わる場合があります。</p>
             {plans.map((p,i)=>(
               <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">{p.icon}</span>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{p.name}</p>
-                    <p className="text-xs text-gray-500">{p.desc}</p>
-                  </div>
+                  <div><p className="font-bold text-gray-900 text-sm">{p.name}</p><p className="text-xs text-gray-500">{p.desc}</p></div>
                 </div>
                 <div className="bg-green-50 rounded-lg px-3 py-2 text-xs text-green-700">{p.detail}</div>
               </div>
@@ -1018,7 +1481,6 @@ const KyosaiScreen = ({onBack}) => {
             {[
               {title:'新規加入',steps:['加入申込書を担当者（または書記局）に請求','必要事項を記入し提出','掛金の口座振替手続き','翌月1日より保障開始']},
               {title:'内容変更（増口・減口）',steps:['変更申請書を書記局に提出','毎月15日締切、翌月1日反映','変更内容の確認書が届く']},
-              {title:'住所・口座変更',steps:['変更届を書記局に提出','本人確認書類が必要な場合あり','変更完了の通知が届く']},
               {title:'脱退（退職・転職時）',steps:['脱退申請書を書記局に提出','積立共済は返戻金の手続きが別途必要','退職前に早めに手続きを']},
             ].map((item,i)=>(
               <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
@@ -1043,9 +1505,8 @@ const KyosaiScreen = ({onBack}) => {
             </div>
             {[
               {type:'入院・手術の請求',docs:['共済金請求書（書記局に請求）','診断書（所定様式）','領収書のコピー'],days:'書類提出から約2〜3週間で支給'},
-              {type:'死亡共済金の請求',docs:['共済金請求書','死亡診断書（写し）','戸籍謄本','受取人の本人確認書類','振込口座確認書類'],days:'書類提出から約4週間で支給'},
+              {type:'死亡共済金の請求',docs:['共済金請求書','死亡診断書（写し）','戸籍謄本','受取人の本人確認書類'],days:'書類提出から約4週間で支給'},
               {type:'火災・風水害の請求',docs:['共済金請求書','罹災証明書','被害状況の写真','修理見積書または領収書'],days:'調査・確認後、約3〜4週間で支給'},
-              {type:'自動車事故の請求',docs:['共済金請求書','交通事故証明書','修理見積書（車両）','診断書（人身の場合）'],days:'書類提出から約3〜4週間で支給'},
             ].map((item,i)=>(
               <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 mb-3">
                 <p className="font-bold text-gray-900 text-sm mb-2">{item.type}</p>
@@ -1075,14 +1536,8 @@ const KyosaiScreen = ({onBack}) => {
             ):(
               <div className="bg-white rounded-xl border border-gray-100 p-4">
                 <p className="font-bold text-gray-900 text-sm mb-3">問い合わせフォーム</p>
-                <div className="mb-3">
-                  <label className="text-xs font-bold text-gray-500 mb-1 block">氏名</label>
-                  <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="山田 太郎" value={contactForm.name} onChange={e=>setContactForm(f=>({...f,name:e.target.value}))}/>
-                </div>
-                <div className="mb-3">
-                  <label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label>
-                  <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="your@email.jp" value={contactForm.email} onChange={e=>setContactForm(f=>({...f,email:e.target.value}))}/>
-                </div>
+                <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">氏名</label><input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={contactForm.name} onChange={e=>setContactForm(f=>({...f,name:e.target.value}))}/></div>
+                <div className="mb-3"><label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label><input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={contactForm.email} onChange={e=>setContactForm(f=>({...f,email:e.target.value}))}/></div>
                 <div className="mb-3">
                   <label className="text-xs font-bold text-gray-500 mb-1 block">問い合わせ種別</label>
                   <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" value={contactForm.type} onChange={e=>setContactForm(f=>({...f,type:e.target.value}))}>
@@ -1090,10 +1545,7 @@ const KyosaiScreen = ({onBack}) => {
                     {['新規加入について','内容変更について','請求・給付について','脱退について','その他'].map(t=><option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
-                <div className="mb-4">
-                  <label className="text-xs font-bold text-gray-500 mb-1 block">内容</label>
-                  <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[100px]" placeholder="ご質問・ご相談内容をご記入ください" value={contactForm.message} onChange={e=>setContactForm(f=>({...f,message:e.target.value}))}/>
-                </div>
+                <div className="mb-4"><label className="text-xs font-bold text-gray-500 mb-1 block">内容</label><textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[100px]" value={contactForm.message} onChange={e=>setContactForm(f=>({...f,message:e.target.value}))}/></div>
                 <button onClick={()=>{if(contactForm.name&&contactForm.email&&contactForm.type&&contactForm.message)setSent(true);}} className={`w-full rounded-xl py-3 font-bold text-sm ${contactForm.name&&contactForm.email&&contactForm.type&&contactForm.message?'bg-green-600 text-white':'bg-gray-200 text-gray-400'}`}>送信する</button>
               </div>
             )}
@@ -1104,320 +1556,21 @@ const KyosaiScreen = ({onBack}) => {
   );
 };
 
-// ─── ADMIN SCREENS ───────────────────────────────────────────────────────────
-const AdminConsults = ({onBack,consults,setConsults}) => {
-  const [selected,setSelected]=useState(null);
-  const [note,setNote]=useState('');
-  const updateStatus = (id,status) => {
-    setConsults(cs=>cs.map(c=>c.id===id?{...c,status,adminNote:note||c.adminNote}:c));
-    setSelected(null);setNote('');
-  };
-  if(selected){
-    const c=consults.find(x=>x.id===selected);
-    return (
-      <div className="fade-in pb-24">
-        <Header title="相談詳細" onBack={()=>setSelected(null)}/>
-        <div className="px-4 pt-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <div className="flex items-center gap-2 mb-3"><StatusBadge status={c.status}/><span className="text-xs text-gray-400">{c.date}</span><span className="text-xs text-gray-400 ml-auto">#{c.confirmCode}</span></div>
-            <div className="mb-2"><span className="tag bg-purple-100 text-purple-700 mr-2">{c.category}</span></div>
-            <p className="text-sm text-gray-800 leading-relaxed bg-gray-50 rounded-xl p-3 mb-4">{c.content}</p>
-            <label className="text-xs font-bold text-gray-500 mb-1 block">対応メモ（内部用）</label>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none min-h-[80px] mb-4" value={note||c.adminNote} onChange={e=>setNote(e.target.value)} placeholder="対応内容・進捗を記録"/>
-            <div className="flex gap-2">
-              {['未対応','対応中','解決済'].map(s=>(
-                <button key={s} onClick={()=>updateStatus(c.id,s)} className={`flex-1 py-2.5 rounded-xl text-xs font-bold border-2 transition-colors ${c.status===s?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{s}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="fade-in pb-24">
-      <Header title="相談管理" onBack={onBack}/>
-      <div className="px-4 pt-4">
-        <div className="flex gap-2 mb-4 text-xs">
-          {['未対応','対応中','解決済'].map(s=>{const n=consults.filter(c=>c.status===s).length;return<div key={s} className="flex-1 bg-white rounded-xl p-3 border border-gray-100 text-center"><p className="font-bold text-lg text-gray-900">{n}</p><p className="text-gray-500">{s}</p></div>})}
-        </div>
-        {consults.length===0?<div className="text-center py-12 text-gray-400 text-sm">相談はまだありません</div>:consults.map(c=>(
-          <button key={c.id} onClick={()=>setSelected(c.id)} className="w-full bg-white rounded-xl border border-gray-100 p-4 mb-2 text-left card-hover">
-            <div className="flex items-center gap-2 mb-1">
-              <StatusBadge status={c.status}/>
-              <span className="tag bg-purple-100 text-purple-700">{c.category}</span>
-              <span className="text-xs text-gray-400 ml-auto">{c.date}</span>
-            </div>
-            <p className="text-sm text-gray-700 line-clamp-2 leading-snug">{c.content}</p>
-            <p className="text-xs text-gray-400 mt-1">確認コード: {c.confirmCode}</p>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
-  const [showForm,setShowForm]=useState(false);
-  const [newSurvey,setNewSurvey]=useState({title:'',description:'',endAt:'',type:'single',options:['','']});
-  const [viewResult,setViewResult]=useState(null);
-
-  const addOption = () => setNewSurvey(f=>({...f,options:[...f.options,'']}));
-  const updateOption = (i,v) => setNewSurvey(f=>({...f,options:f.options.map((o,j)=>j===i?v:o)}));
-  const createSurvey = () => {
-    if(!newSurvey.title||!newSurvey.endAt)return;
-    const ns={id:surveys.length+1,...newSurvey,options:newSurvey.type==='rating'||newSurvey.type==='text'?[]:newSurvey.options.filter(Boolean),status:'active',isAnswered:false,answerCount:0,totalCount:58};
-    setSurveys(ss=>[ns,...ss]);
-    setShowForm(false);
-    setNewSurvey({title:'',description:'',endAt:'',options:['','']});
-    showToast('アンケートを作成しました');
-  };
-  const toggleStatus = (id) => setSurveys(ss=>ss.map(s=>s.id===id?{...s,status:s.status==='active'?'closed':'active'}:s));
-
-  if(viewResult){
-    const s=surveys.find(x=>x.id===viewResult);
-    return(
-      <div className="fade-in pb-24">
-        <Header title="アンケート結果" onBack={()=>setViewResult(null)}/>
-        <div className="px-4 pt-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h2 className="font-bold text-gray-900 mb-1">{s.title}</h2>
-            <p className="text-xs text-gray-500 mb-3">回答数: {s.answerCount}人 / {s.totalCount}人</p>
-            {(s.options||['はい','いいえ']).map((opt,i)=>{
-              const pct=Math.round(s.answerCount>0?(s.answerCount*(0.3+i*0.2))/s.answerCount*100:0)||Math.floor(40-i*10);
-              return(
-                <div key={i} className="mb-3">
-                  <div className="flex justify-between text-xs text-gray-600 mb-1"><span>{opt}</span><span className="font-bold">{pct}%</span></div>
-                  <div className="bg-gray-100 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{width:`${pct}%`}}/></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="fade-in pb-24">
-      <Header title="アンケート管理" onBack={onBack} right={<button onClick={()=>setShowForm(true)} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>作成</button>}/>
-      <div className="px-4 pt-4">
-        {showForm&&(
-          <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
-            <p className="font-bold text-sm text-gray-900 mb-3">新規アンケート作成</p>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="タイトル" value={newSurvey.title} onChange={e=>setNewSurvey(f=>({...f,title:e.target.value}))}/>
-            <div className="mb-2">
-              <p className="text-xs text-gray-500 mb-1">回答方式</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {[['single','単一選択'],['multi','複数選択'],['rating','5段階評価'],['text','自由記述']].map(([v,l])=>(
-                  <button key={v} onClick={()=>setNewSurvey(f=>({...f,type:v}))} className={`border rounded-lg py-1.5 text-xs font-medium transition-colors ${newSurvey.type===v?'border-blue-600 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>{l}</button>
-                ))}
-              </div>
-            </div>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none" rows={2} placeholder="説明文" value={newSurvey.description} onChange={e=>setNewSurvey(f=>({...f,description:e.target.value}))}/>
-            <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" value={newSurvey.endAt} onChange={e=>setNewSurvey(f=>({...f,endAt:e.target.value}))}/>
-            {(newSurvey.type==='single'||newSurvey.type==='multi')&&(<>
-              <p className="text-xs font-bold text-gray-500 mb-1">選択肢</p>
-              {newSurvey.options.map((opt,i)=>(
-                <input key={i} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-1.5" placeholder={`選択肢 ${i+1}`} value={opt} onChange={e=>updateOption(i,e.target.value)}/>
-              ))}
-              <button onClick={addOption} className="text-xs text-blue-600 mb-3">＋ 選択肢を追加</button>
-            </>)}
-            {newSurvey.type==='rating'&&<p className="text-xs text-gray-400 mb-3">★ 1〜5 の5段階評価です（選択肢の入力不要）</p>}
-            {newSurvey.type==='text'&&<p className="text-xs text-gray-400 mb-3">📝 自由記述式です（選択肢の入力不要）</p>}
-            <div className="flex gap-2">
-              <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
-              <button onClick={createSurvey} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">作成する</button>
-            </div>
-          </div>
-        )}
-        {surveys.map(s=>(
-          <div key={s.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">{s.title}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <StatusBadge status={s.status}/>
-                  <span className="text-xs text-gray-400">期限 {s.endAt}</span>
-                  <span className="text-xs text-gray-500 font-medium">{s.answerCount}/{s.totalCount}人回答</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <button onClick={()=>setViewResult(s.id)} className="flex-1 border border-gray-200 rounded-lg py-2 text-xs text-gray-600">結果を見る</button>
-              <button onClick={()=>toggleStatus(s.id)} className={`flex-1 border rounded-lg py-2 text-xs font-bold ${s.status==='active'?'border-red-200 text-red-600':'border-green-200 text-green-600'}`}>{s.status==='active'?'締め切る':'再開する'}</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const AdminMembers = ({onBack,members,setMembers,showToast}) => {
-  const [showForm,setShowForm]=useState(false);
-  const [editId,setEditId]=useState(null);
-  const [formData,setFormData]=useState({name:'',dept:'',email:'',role:'member',joinDate:''});
-  const [search,setSearch]=useState('');
-
-  const openAdd = () => { setFormData({name:'',dept:'',email:'',role:'member',joinDate:''});setEditId(null);setShowForm(true); };
-  const openEdit = (m) => { setFormData({name:m.name,dept:m.dept,email:m.email,role:m.role,joinDate:m.joinDate||''});setEditId(m.id);setShowForm(true); };
-
-  const saveForm = () => {
-    if(!formData.name||!formData.dept)return;
-    if(editId){
-      setMembers(ms=>ms.map(m=>m.id===editId?{...m,...formData}:m));
-      showToast('組合員情報を更新しました');
-    } else {
-      setMembers(ms=>[...ms,{id:Date.now(),...formData}]);
-      showToast('組合員を追加しました');
-    }
-    setShowForm(false);setEditId(null);
-  };
-  const deleteMember = (id) => { if(confirm('削除しますか？'))setMembers(ms=>ms.filter(m=>m.id!==id)); };
-
-  const filtered=members.filter(m=>!search||(m.name+m.dept+m.email).includes(search));
-  const depts=[...new Set(members.map(m=>m.dept))];
-
-  return (
-    <div className="fade-in pb-24">
-      <Header title="組合員管理" onBack={onBack} right={<button onClick={openAdd} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
-      <div className="px-4 pt-3">
-        <div className="flex gap-2 mb-3 text-xs">
-          <div className="flex-1 bg-white rounded-xl p-3 border border-gray-100 text-center"><p className="font-bold text-lg text-blue-700">{members.length}</p><p className="text-gray-500">総組合員</p></div>
-          <div className="flex-1 bg-white rounded-xl p-3 border border-gray-100 text-center"><p className="font-bold text-lg text-gray-900">{depts.length}</p><p className="text-gray-500">所属課</p></div>
-          <div className="flex-1 bg-white rounded-xl p-3 border border-gray-100 text-center"><p className="font-bold text-lg text-red-600">{members.filter(m=>m.role==='admin').length}</p><p className="text-gray-500">執行部</p></div>
-        </div>
-        <div className="relative mb-3">
-          <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pl-9 text-sm" placeholder="氏名・所属で検索" value={search} onChange={e=>setSearch(e.target.value)}/>
-          <div className="absolute left-3 top-3"><Icon name="search" size={16} color="#9ca3af"/></div>
-        </div>
-        {showForm&&(
-          <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
-            <p className="font-bold text-sm text-gray-900 mb-3">{editId?'組合員情報を編集':'組合員追加'}</p>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="氏名 *" value={formData.name} onChange={e=>setFormData(f=>({...f,name:e.target.value}))}/>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="所属課 *" value={formData.dept} onChange={e=>setFormData(f=>({...f,dept:e.target.value}))}/>
-            <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="メールアドレス" value={formData.email} onChange={e=>setFormData(f=>({...f,email:e.target.value}))}/>
-            <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" value={formData.joinDate} onChange={e=>setFormData(f=>({...f,joinDate:e.target.value}))}/>
-            <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" value={formData.role} onChange={e=>setFormData(f=>({...f,role:e.target.value}))}>
-              <option value="member">一般組合員</option>
-              <option value="admin">執行部</option>
-            </select>
-            <div className="flex gap-2">
-              <button onClick={()=>{setShowForm(false);setEditId(null);}} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
-              <button onClick={saveForm} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">{editId?'保存する':'追加する'}</button>
-            </div>
-          </div>
-        )}
-        {filtered.map(m=>(
-          <div key={m.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-2 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-bold text-blue-700">{m.name[0]}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-gray-900">{m.name}</p>
-                {m.role==='admin'&&<span className="tag bg-red-100 text-red-700">執行部</span>}
-              </div>
-              <p className="text-xs text-gray-500">{m.dept}</p>
-              <p className="text-xs text-gray-400">{m.email}</p>
-            </div>
-            <div className="flex gap-1 flex-shrink-0">
-              <button onClick={()=>setMembers(ms=>ms.map(x=>x.id===m.id?{...x,role:x.role==='admin'?'member':'admin'}:x))} className={`text-xs px-2 py-1 rounded-lg border ${m.role==='admin'?'border-red-200 text-red-500':'border-gray-200 text-gray-400'}`}>{m.role==='admin'?'管理者':'一般'}</button>
-              <button onClick={()=>openEdit(m)} className="p-2 text-gray-400 hover:text-blue-500 transition-colors"><Icon name="edit" size={16} color="currentColor"/></button>
-              <button onClick={()=>deleteMember(m.id)} className="p-2 text-gray-300 hover:text-red-400 transition-colors"><Icon name="trash" size={16} color="currentColor"/></button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const AdminFAQs = ({onBack,faqs,setFaqs,showToast}) => {
-  const [showForm,setShowForm]=useState(false);
-  const [editItem,setEditItem]=useState(null);
-  const [form,setForm]=useState({category:'',q:'',a:''});
-
-  const openNew = () => { setForm({category:'',q:'',a:''});setEditItem(null);setShowForm(true); };
-  const openEdit = (f) => { setForm({category:f.category,q:f.q,a:f.a});setEditItem(f.id);setShowForm(true); };
-  const save = () => {
-    if(!form.category||!form.q||!form.a)return;
-    if(editItem){
-      setFaqs(fs=>fs.map(f=>f.id===editItem?{...f,...form}:f));
-      showToast('FAQを更新しました');
-    } else {
-      setFaqs(fs=>[...fs,{id:fs.length+1,...form}]);
-      showToast('FAQを追加しました');
-    }
-    setShowForm(false);
-  };
-  const deleteFaq = (id) => { if(confirm('削除しますか？'))setFaqs(fs=>fs.filter(f=>f.id!==id));showToast('FAQを削除しました'); };
-
-  return (
-    <div className="fade-in pb-24">
-      <Header title="FAQ管理" onBack={onBack} right={<button onClick={openNew} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>追加</button>}/>
-      <div className="px-4 pt-4">
-        {showForm&&(
-          <div className="bg-white rounded-2xl border border-blue-200 p-4 mb-4">
-            <p className="font-bold text-sm text-gray-900 mb-3">{editItem?'FAQ編集':'FAQ追加'}</p>
-            <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="カテゴリ（例：労働時間・休暇）" value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}/>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none" rows={2} placeholder="質問 Q" value={form.q} onChange={e=>setForm(f=>({...f,q:e.target.value}))}/>
-            <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3 resize-none" rows={3} placeholder="回答 A" value={form.a} onChange={e=>setForm(f=>({...f,a:e.target.value}))}/>
-            <div className="flex gap-2">
-              <button onClick={()=>setShowForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button>
-              <button onClick={save} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">保存する</button>
-            </div>
-          </div>
-        )}
-        {faqs.map(f=>(
-          <div key={f.id} className="bg-white rounded-xl border border-gray-100 p-4 mb-2">
-            <div className="flex items-start gap-2">
-              <div className="flex-1 min-w-0">
-                <span className="tag bg-blue-50 text-blue-600 mb-1">{f.category}</span>
-                <p className="text-sm font-bold text-gray-800 leading-snug">{f.q}</p>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{f.a}</p>
-              </div>
-              <div className="flex gap-1 flex-shrink-0">
-                <button onClick={()=>openEdit(f)} className="p-2 text-gray-400 hover:text-blue-500"><Icon name="edit" size={15} color="currentColor"/></button>
-                <button onClick={()=>deleteFaq(f.id)} className="p-2 text-gray-300 hover:text-red-400"><Icon name="trash" size={15} color="currentColor"/></button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-
-
-// ─── ADMIN PROMOTE MODAL ────────────────────────────────────────────────────
-const AdminPromoteModal = ({user, onClose, onPromote}) => {
-  const DEFAULT_CODE = localStorage.getItem('admin_setup_code') || 'nishinoshima-admin';
-  const [code, setCode] = useState('');
-  const [err, setErr] = useState('');
-  const handleSubmit = () => {
-    if(code === DEFAULT_CODE){
-      onPromote(user.email || '');
-    } else {
-      setErr('コードが正しくありません');
-    }
+const AdminPromoteModal = ({user,onClose,onPromote}) => {
+  const DEFAULT_CODE=localStorage.getItem('admin_setup_code')||'nishinoshima-admin';
+  const [code,setCode]=useState('');
+  const [err,setErr]=useState('');
+  const handleSubmit=()=>{
+    if(code===DEFAULT_CODE){onPromote(user.email||'');}
+    else{setErr('コードが正しくありません');}
   };
   return (
     <div className="modal-overlay" style={{zIndex:100}}>
       <div className="modal-box">
         <h2 className="font-bold text-gray-900 text-base mb-1">管理者昇格</h2>
         <p className="text-sm text-gray-500 mb-4">管理者設定コードを入力してください</p>
-        {err && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{err}</p>}
-        <input
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4"
-          type="password"
-          placeholder="設定コードを入力"
-          value={code}
-          onChange={e=>{setCode(e.target.value);setErr('');}}
-          onKeyDown={e=>e.key==='Enter'&&handleSubmit()}
-        />
+        {err&&<p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{err}</p>}
+        <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4" type="password" placeholder="設定コードを入力" value={code} onChange={e=>{setCode(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&handleSubmit()}/>
         <div className="flex gap-2">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-xl py-3 text-sm text-gray-600">キャンセル</button>
           <button onClick={handleSubmit} className="flex-1 bg-blue-700 text-white rounded-xl py-3 text-sm font-bold">昇格する</button>
@@ -1428,7 +1581,6 @@ const AdminPromoteModal = ({user, onClose, onPromote}) => {
   );
 };
 
-// ─── 組合情報ページ ───────────────────────────────────────────────────────────
 const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActivities,showToast}) => {
   const [tab,setTab]=useState('officers');
   const [rules,setRules]=useState(()=>loadData('union_rules',null)||UNION_RULES_DEFAULT);
@@ -1437,25 +1589,22 @@ const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActi
   const [showActForm,setShowActForm]=useState(false);
   const [showOffForm,setShowOffForm]=useState(false);
   const [actForm,setActForm]=useState({title:'',date:'',body:'',imageUrl:'',tags:''});
-  const [offForm,setOffForm]=useState({title:'',name:'',dept:'',note:''});
-
+  const [offForm,setOffForm]=useState({title:'',name:'',dept:'',note:'',email:''});
   const saveRules=()=>{saveData('union_rules',rulesText);setRules(rulesText);setEditRules(false);showToast('組合規約を保存しました');};
   const addActivity=()=>{
     if(!actForm.title||!actForm.date||!actForm.body)return;
     const na={id:Date.now(),...actForm,tags:actForm.tags?actForm.tags.split(',').map(t=>t.trim()):[]};
-    setActivities(as=>[na,...as]);
-    setShowActForm(false);setActForm({title:'',date:'',body:'',imageUrl:'',tags:''});
+    setActivities(as=>[na,...as]);setShowActForm(false);setActForm({title:'',date:'',body:'',imageUrl:'',tags:''});
     showToast('活動記録を追加しました');
   };
   const deleteActivity=(id)=>{if(confirm('削除しますか？'))setActivities(as=>as.filter(a=>a.id!==id));};
   const addOfficer=()=>{
     if(!offForm.title||!offForm.name)return;
     setOfficers(os=>[...os,{id:Date.now(),...offForm}]);
-    setShowOffForm(false);setOffForm({title:'',name:'',dept:'',note:''});
+    setShowOffForm(false);setOffForm({title:'',name:'',dept:'',note:'',email:''});
     showToast('役員を追加しました');
   };
   const deleteOfficer=(id)=>{if(confirm('削除しますか？'))setOfficers(os=>os.filter(o=>o.id!==id));};
-
   const tabs=[['officers','役員体制'],['rules','組合規約'],['activities','活動記録']];
   return(
     <div className="fade-in pb-24">
@@ -1475,6 +1624,7 @@ const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActi
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="役職（例：執行委員長）" value={offForm.title} onChange={e=>setOffForm(f=>({...f,title:e.target.value}))}/>
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="氏名" value={offForm.name} onChange={e=>setOffForm(f=>({...f,name:e.target.value}))}/>
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="所属課" value={offForm.dept} onChange={e=>setOffForm(f=>({...f,dept:e.target.value}))}/>
+                <input type="email" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="メールアドレス（匿名相談の送信先に使用）" value={offForm.email} onChange={e=>setOffForm(f=>({...f,email:e.target.value}))}/>
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" placeholder="備考（任意）" value={offForm.note} onChange={e=>setOffForm(f=>({...f,note:e.target.value}))}/>
                 <div className="flex gap-2"><button onClick={()=>setShowOffForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button><button onClick={addOfficer} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">追加する</button></div>
               </div>
@@ -1487,6 +1637,7 @@ const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActi
                     <p className="text-xs text-blue-600 font-bold">{o.title}</p>
                     <p className="text-sm font-bold text-gray-900">{o.name}</p>
                     <p className="text-xs text-gray-500">{o.dept}{o.note&&` ・ ${o.note}`}</p>
+                    {o.email&&<p className="text-xs text-gray-400">{o.email}</p>}
                   </div>
                   {isAdmin&&<button onClick={()=>deleteOfficer(o.id)} className="p-1.5 text-gray-300 hover:text-red-400"><Icon name="trash" size={14} color="currentColor"/></button>}
                 </div>
@@ -1518,7 +1669,7 @@ const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActi
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="タイトル" value={actForm.title} onChange={e=>setActForm(f=>({...f,title:e.target.value}))}/>
                 <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" value={actForm.date} onChange={e=>setActForm(f=>({...f,date:e.target.value}))}/>
                 <textarea className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2 resize-none min-h-[80px]" placeholder="活動内容" value={actForm.body} onChange={e=>setActForm(f=>({...f,body:e.target.value}))}/>
-                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="画像URL（Google フォト等のリンク）" value={actForm.imageUrl} onChange={e=>setActForm(f=>({...f,imageUrl:e.target.value}))}/>
+                <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" placeholder="画像URL（任意）" value={actForm.imageUrl} onChange={e=>setActForm(f=>({...f,imageUrl:e.target.value}))}/>
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-3" placeholder="タグ（カンマ区切り例：大会,交渉）" value={actForm.tags} onChange={e=>setActForm(f=>({...f,tags:e.target.value}))}/>
                 <div className="flex gap-2"><button onClick={()=>setShowActForm(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-600">キャンセル</button><button onClick={addActivity} className="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm font-bold">追加する</button></div>
               </div>
@@ -1546,10 +1697,9 @@ const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActi
   );
 };
 
-
 const AdminCodeSetting = () => {
-  const [code, setCode] = useState(localStorage.getItem('admin_setup_code')||'nishinoshima-admin');
-  const [saved, setSaved] = useState(false);
+  const [code,setCode]=useState(localStorage.getItem('admin_setup_code')||'nishinoshima-admin');
+  const [saved,setSaved]=useState(false);
   return (
     <div>
       <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="新しいコードを設定"/>
@@ -1558,7 +1708,6 @@ const AdminCodeSetting = () => {
   );
 };
 
-// ─── FIREBASE SETTINGS ──────────────────────────────────────────────────────
 const FirebaseSettings = ({onBack}) => {
   const saved=getFbConfig()||{};
   const [cfg,setCfg]=useState({apiKey:saved.apiKey||'',authDomain:saved.authDomain||'',projectId:saved.projectId||''});
@@ -1575,7 +1724,7 @@ const FirebaseSettings = ({onBack}) => {
       <div className="px-4 pt-4">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-xs text-blue-700">
           <p className="font-bold mb-1">設定手順</p>
-          <p>1. <strong>console.firebase.google.com</strong> にアクセス</p>
+          <p>1. console.firebase.google.com にアクセス</p>
           <p>2. プロジェクト作成 → Authentication → Email/Password を有効化</p>
           <p>3. Authentication → Users から組合員のアカウントを追加</p>
           <p>4. プロジェクト設定 → ウェブアプリ → 設定値をここに入力</p>
@@ -1599,7 +1748,6 @@ const FirebaseSettings = ({onBack}) => {
   );
 };
 
-// ─── MENU / SETTINGS ─────────────────────────────────────────────────────────
 const NotificationSettings = ({onBack}) => {
   const [cfg,setCfg]=useState({publicKey:localStorage.getItem('ejs_pubkey')||'',serviceId:localStorage.getItem('ejs_service')||'',templateId:localStorage.getItem('ejs_template')||'',adminEmail:localStorage.getItem('ejs_admin_email')||'',allEmail:localStorage.getItem('ejs_all_email')||''});
   const [notifs,setNotifs]=useState({newPost:notifOn('newPost'),anonConsult:notifOn('anonConsult'),reservation:notifOn('reservation')});
@@ -1627,7 +1775,7 @@ const NotificationSettings = ({onBack}) => {
         </div>
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
           <p className="text-xs font-bold text-gray-500 mb-3">通知タイミング</p>
-          {[['newPost','新しいお知らせ投稿時（全組合員へ）'],['anonConsult','匿名相談受信時（管理者へ）'],['reservation','相談予約受信時（管理者へ）']].map(([k,l])=>(
+          {[['newPost','新しいお知らせ投稿時（全組合員へ）'],['anonConsult','匿名相談受信時（担当者へ）'],['reservation','相談予約受信時（管理者へ）']].map(([k,l])=>(
             <div key={k} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
               <span className="text-sm text-gray-700">{l}</span>
               <button onClick={()=>setNotifs(n=>({...n,[k]:!n[k]}))} className={`toggle ${notifs[k]?'bg-blue-600':'bg-gray-200'}`}>
@@ -1635,6 +1783,10 @@ const NotificationSettings = ({onBack}) => {
               </button>
             </div>
           ))}
+        </div>
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+          <p className="text-xs font-bold text-gray-500 mb-2">管理者昇格コード（変更可）</p>
+          <AdminCodeSetting/>
         </div>
         <button onClick={save} className="w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm">保存する</button>
       </div>
@@ -1647,9 +1799,7 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
     <Header title="メニュー"/>
     <div className="px-4 pt-4">
       <div className="bg-white rounded-2xl p-4 flex items-center gap-4 mb-5 shadow-sm border border-gray-100">
-        <div className="w-12 h-12 bg-blue-700 rounded-full flex items-center justify-center">
-          <Icon name="user" size={24} color="white"/>
-        </div>
+        <div className="w-12 h-12 bg-blue-700 rounded-full flex items-center justify-center"><Icon name="user" size={24} color="white"/></div>
         <div>
           <p className="font-bold text-gray-900">{user.name}</p>
           <p className="text-xs text-gray-500">{user.dept}</p>
@@ -1672,17 +1822,11 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
       <p className="text-xs font-bold text-gray-400 mb-2 px-1">アカウント・設定</p>
       <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
         {user.role==='admin'&&<button onClick={onFirebaseSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-700">Firebaseログイン設定</p>
-            <p className="text-xs text-gray-400 mt-0.5">{getFbConfig()?'✓ Firebase認証 有効':'デモモード（未設定）'}</p>
-          </div>
+          <div><p className="text-sm text-gray-700">Firebaseログイン設定</p><p className="text-xs text-gray-400 mt-0.5">{getFbConfig()?'✓ Firebase認証 有効':'デモモード（未設定）'}</p></div>
           <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>}
         {user.role==='admin'&&<button onClick={onNotifSettings} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-700">メール通知設定</p>
-            <p className="text-xs text-gray-400 mt-0.5">EmailJS でリアルタイム通知を設定</p>
-          </div>
+          <div><p className="text-sm text-gray-700">メール通知設定</p><p className="text-xs text-gray-400 mt-0.5">EmailJS でリアルタイム通知を設定</p></div>
           <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>}
         <button className="w-full text-left px-4 py-3.5 flex items-center justify-between">
@@ -1693,29 +1837,22 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
       <p className="text-xs font-bold text-gray-400 mb-2 px-1">組合情報</p>
       <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
         <button onClick={onUnionInfo} className="w-full text-left px-4 py-3.5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-700">役員体制・組合規約・活動記録</p>
-            <p className="text-xs text-gray-400 mt-0.5">組合の基本情報</p>
-          </div>
+          <div><p className="text-sm text-gray-700">役員体制・組合規約・活動記録</p><p className="text-xs text-gray-400 mt-0.5">組合の基本情報</p></div>
           <Icon name="chevron" size={16} color="#9ca3af"/>
         </button>
         <button className="w-full text-left px-4 py-3.5 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-700">西ノ島町職員労働組合</p>
-            <p className="text-xs text-gray-400 mt-0.5">📍 西ノ島町役場 書記局（2階）</p>
-          </div>
+          <div><p className="text-sm text-gray-700">西ノ島町職員労働組合</p><p className="text-xs text-gray-400 mt-0.5">📍 西ノ島町役場 書記局（2階）</p></div>
         </button>
       </div>
       {user.role!=='admin'&&(
         <button onClick={onPromote} className="w-full border border-blue-200 text-blue-600 py-3 rounded-xl font-medium text-sm mb-3">管理者設定コードで昇格する</button>
       )}
       <button onClick={onLogout} className="w-full border border-red-200 text-red-600 py-3 rounded-xl font-medium text-sm">ログアウト</button>
-      <p className="text-center text-xs text-gray-300 mt-4">ver 2.0.0</p>
+      <p className="text-center text-xs text-gray-300 mt-4">ver 2.1.0</p>
     </div>
   </div>
 );
 
-// ─── APP ─────────────────────────────────────────────────────────────────────
 const App = () => {
   const [user,setUser]=useState(null);
   const [tab,setTab]=useState('home');
@@ -1724,7 +1861,7 @@ const App = () => {
   const [surveyView,setSurveyView]=useState('list');
   const [selectedSurvey,setSelectedSurvey]=useState(null);
   const [consultView,setConsultView]=useState('top');
-  const [subScreen,setSubScreen]=useState(null); // 'notif' | 'admin_consults' | 'admin_surveys' | 'admin_members' | 'admin_faqs' | 'kyosai'
+  const [subScreen,setSubScreen]=useState(null);
   const [posts,setPosts]=useState(()=>loadData('union_posts',SAMPLE_POSTS));
   const [surveys,setSurveys]=useState(()=>loadData('union_surveys',SAMPLE_SURVEYS));
   const [consults,setConsults]=useState(()=>loadData('union_consults',SAMPLE_CONSULTS));
@@ -1756,7 +1893,7 @@ const App = () => {
   };
 
   const addPost=async(form)=>{
-    const np={id:posts.length+1,...form,authorName:user.name,publishedAt:new Date().toISOString().slice(0,10),readCount:0,totalCount:members.length,isRead:true};
+    const np={id:Date.now(),...form,authorName:user.name,publishedAt:new Date().toISOString().slice(0,10),readCount:0,totalCount:members.length,isRead:true};
     setPosts(ps=>[np,...ps]);setBoardView('list');showToast('記事を公開しました');
     if(notifOn('newPost')&&getEjsCfg().allEmail){
       sendMail({type:'newPost',to:getEjsCfg().allEmail,subject:`【組合お知らせ】${form.title}`,body:`西ノ島町職員労働組合より新しいお知らせが届きました。\n\n${(CATEGORY_MAP[form.category]||{}).label}：${form.title}\n\n${form.body.slice(0,200)}\n\nポータルからご確認ください。`,senderName:`${user.name}（西ノ島町職員労働組合）`}).catch(e=>console.warn(e));
@@ -1768,13 +1905,13 @@ const App = () => {
     setSurveyView('list');showToast('回答を送信しました');
   };
 
-  const handleAnonSubmit=(category,content,code)=>{
-    const nc={id:consults.length+1,category,content,date:new Date().toISOString().slice(0,10),status:'未対応',confirmCode:code,adminNote:''};
+  const handleAnonSubmit=(category,content,code,recipient)=>{
+    const nc={id:Date.now(),category,content,date:new Date().toISOString().slice(0,10),status:'未対応',confirmCode:code,recipientName:recipient?.name||'',recipientEmail:recipient?.email||'',adminNote:'',adminReply:''};
     setConsults(cs=>[nc,...cs]);
     setConsultView('top');
-    // 確認コードは AnonConsult 内の完了画面で表示
-    if(notifOn('anonConsult')&&getEjsCfg().adminEmail){
-      sendMail({type:'anonConsult',to:getEjsCfg().adminEmail,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が1件届いています。\nカテゴリ：${category}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面から内容をご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
+    const toEmail=recipient?.email||getEjsCfg().adminEmail;
+    if(notifOn('anonConsult')&&toEmail){
+      sendMail({type:'anonConsult',to:toEmail,subject:`【要対応】匿名相談が届きました（${category}）`,body:`匿名相談が1件届いています。\n送信先：${recipient?.name||'未指定'}\nカテゴリ：${category}\n受信日時：${new Date().toLocaleString('ja-JP')}\n\n管理者画面からご確認ください。`,senderName:'組合ポータル（自動送信）'}).catch(e=>console.warn(e));
     }
   };
 
@@ -1786,17 +1923,14 @@ const App = () => {
   };
 
   const unreads={board:posts.filter(p=>!p.isRead).length,survey:surveys.filter(s=>s.status==='active'&&!s.isAnswered).length};
-
-  const handleUserLogin = (u) => {
-    setUser(u);
-  };
+  const handleUserLogin=(u)=>setUser(u);
   if(!user)return <LoginScreen onLogin={handleUserLogin}/>;
 
   const renderContent=()=>{
     if(subScreen==='notif')return <NotificationSettings onBack={clearSub}/>;
     if(subScreen==='firebase')return <FirebaseSettings onBack={clearSub}/>;
     if(subScreen==='union_info')return <UnionInfoScreen onBack={clearSub} isAdmin={user.role==='admin'} officers={officers} setOfficers={setOfficers} activities={activities} setActivities={setActivities} showToast={showToast}/>;
-    if(subScreen==='admin_consults')return <AdminConsults onBack={clearSub} consults={consults} setConsults={setConsults}/>;
+    if(subScreen==='admin_consults')return <AdminConsults onBack={clearSub} consults={consults} setConsults={setConsults} user={user}/>;
     if(subScreen==='admin_surveys')return <AdminSurveys onBack={clearSub} surveys={surveys} setSurveys={setSurveys} showToast={showToast}/>;
     if(subScreen==='admin_members')return <AdminMembers onBack={clearSub} members={members} setMembers={setMembers} showToast={showToast}/>;
     if(subScreen==='admin_faqs')return <AdminFAQs onBack={clearSub} faqs={faqs} setFaqs={setFaqs} showToast={showToast}/>;
@@ -1808,11 +1942,13 @@ const App = () => {
       return <BoardList posts={posts} onSelect={p=>{setSelectedPost(p);setBoardView('detail');}} isAdmin={user.role==='admin'} onNew={()=>setBoardView('new')}/>;
     }
     if(tab==='survey'){
+      if(surveyView==='new')return <SurveyCreate onBack={()=>setSurveyView('list')} totalMembers={members.length} onSubmit={(form)=>{const ns={id:Date.now(),...form,status:'active',isAnswered:false,answerCount:0,totalCount:members.length};setSurveys(ss=>[ns,...ss]);setSurveyView('list');showToast('アンケートを公開しました');}}/>;
       if(surveyView==='answer'&&selectedSurvey&&!selectedSurvey.isAnswered)return <SurveyAnswer survey={selectedSurvey} onBack={()=>setSurveyView('list')} onSubmit={submitSurvey}/>;
-      return <SurveyList surveys={surveys} onSelect={s=>{setSelectedSurvey(s);setSurveyView('answer');}}/>;
+      return <SurveyList surveys={surveys} onSelect={s=>{setSelectedSurvey(s);setSurveyView('answer');}} isAdmin={user.role==='admin'} onNew={()=>setSurveyView('new')}/>;
     }
     if(tab==='consult'){
-      if(consultView==='anon')return <AnonConsult onBack={()=>setConsultView('top')} onSubmit={handleAnonSubmit}/>;
+      if(consultView==='anon')return <AnonConsult onBack={()=>setConsultView('top')} onSubmit={handleAnonSubmit} officers={officers}/>;
+      if(consultView==='check')return <ConsultReplyCheck onBack={()=>setConsultView('top')} consults={consults}/>;
       if(consultView==='faq')return <FAQScreen onBack={()=>setConsultView('top')} faqs={faqs}/>;
       if(consultView==='reserve')return <ReserveScreen onBack={()=>setConsultView('top')} onSubmit={handleReserveSubmit}/>;
       return <ConsultTop onSelect={v=>setConsultView(v)}/>;
