@@ -1217,6 +1217,43 @@ const AdminFAQs = ({onBack,faqs,setFaqs,showToast}) => {
 };
 
 
+
+// ─── ADMIN PROMOTE MODAL ────────────────────────────────────────────────────
+const AdminPromoteModal = ({user, onClose, onPromote}) => {
+  const DEFAULT_CODE = localStorage.getItem('admin_setup_code') || 'nishinoshima-admin';
+  const [code, setCode] = useState('');
+  const [err, setErr] = useState('');
+  const handleSubmit = () => {
+    if(code === DEFAULT_CODE){
+      onPromote(user.email || '');
+    } else {
+      setErr('コードが正しくありません');
+    }
+  };
+  return (
+    <div className="modal-overlay" style={{zIndex:100}}>
+      <div className="modal-box">
+        <h2 className="font-bold text-gray-900 text-base mb-1">管理者昇格</h2>
+        <p className="text-sm text-gray-500 mb-4">管理者設定コードを入力してください</p>
+        {err && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{err}</p>}
+        <input
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4"
+          type="password"
+          placeholder="設定コードを入力"
+          value={code}
+          onChange={e=>{setCode(e.target.value);setErr('');}}
+          onKeyDown={e=>e.key==='Enter'&&handleSubmit()}
+        />
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-xl py-3 text-sm text-gray-600">キャンセル</button>
+          <button onClick={handleSubmit} className="flex-1 bg-blue-700 text-white rounded-xl py-3 text-sm font-bold">昇格する</button>
+        </div>
+        <p className="text-xs text-gray-400 text-center mt-3">初期コード: nishinoshima-admin</p>
+      </div>
+    </div>
+  );
+};
+
 // ─── 組合情報ページ ───────────────────────────────────────────────────────────
 const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActivities,showToast}) => {
   const [tab,setTab]=useState('officers');
@@ -1335,6 +1372,18 @@ const UnionInfoScreen = ({onBack,isAdmin,officers,setOfficers,activities,setActi
   );
 };
 
+
+const AdminCodeSetting = () => {
+  const [code, setCode] = useState(localStorage.getItem('admin_setup_code')||'nishinoshima-admin');
+  const [saved, setSaved] = useState(false);
+  return (
+    <div>
+      <input className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-2" type="password" value={code} onChange={e=>setCode(e.target.value)} placeholder="新しいコードを設定"/>
+      <button onClick={()=>{localStorage.setItem('admin_setup_code',code);setSaved(true);setTimeout(()=>setSaved(false),2000);}} className="w-full bg-gray-700 text-white rounded-xl py-2 text-xs font-bold">{saved?'✓ 保存しました':'コードを変更する'}</button>
+    </div>
+  );
+};
+
 // ─── FIREBASE SETTINGS ──────────────────────────────────────────────────────
 const FirebaseSettings = ({onBack}) => {
   const saved=getFbConfig()||{};
@@ -1417,7 +1466,7 @@ const NotificationSettings = ({onBack}) => {
   );
 };
 
-const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav,onUnionInfo}) => (
+const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav,onUnionInfo,onPromote}) => (
   <div className="fade-in pb-24">
     <Header title="メニュー"/>
     <div className="px-4 pt-4">
@@ -1481,6 +1530,9 @@ const MenuScreen = ({user,onLogout,onNotifSettings,onFirebaseSettings,onAdminNav
           </div>
         </button>
       </div>
+      {user.role!=='admin'&&(
+        <button onClick={onPromote} className="w-full border border-blue-200 text-blue-600 py-3 rounded-xl font-medium text-sm mb-3">管理者設定コードで昇格する</button>
+      )}
       <button onClick={onLogout} className="w-full border border-red-200 text-red-600 py-3 rounded-xl font-medium text-sm">ログアウト</button>
       <p className="text-center text-xs text-gray-300 mt-4">ver 2.0.0</p>
     </div>
@@ -1561,10 +1613,6 @@ const App = () => {
 
   const handleUserLogin = (u) => {
     setUser(u);
-    // 管理者が誰もいない場合にプロンプト表示
-    const mems = loadData('union_members', SAMPLE_MEMBERS);
-    const hasAdmin = mems.some(m => m.role === 'admin');
-    if (!hasAdmin) setAdminSetupPrompt(true);
   };
   if(!user)return <LoginScreen onLogin={handleUserLogin}/>;
 
@@ -1593,7 +1641,7 @@ const App = () => {
       if(consultView==='reserve')return <ReserveScreen onBack={()=>setConsultView('top')} onSubmit={handleReserveSubmit}/>;
       return <ConsultTop onSelect={v=>setConsultView(v)}/>;
     }
-    if(tab==='menu')return <MenuScreen user={user} onLogout={()=>{setUser(null);setTab('home');}} onNotifSettings={()=>setSubScreen('notif')} onFirebaseSettings={()=>setSubScreen('firebase')} onAdminNav={id=>setSubScreen('admin_'+id)} onUnionInfo={()=>setSubScreen('union_info')}/>;
+    if(tab==='menu')return <MenuScreen user={user} onLogout={()=>{setUser(null);setTab('home');}} onNotifSettings={()=>setSubScreen('notif')} onFirebaseSettings={()=>setSubScreen('firebase')} onAdminNav={id=>setSubScreen('admin_'+id)} onUnionInfo={()=>setSubScreen('union_info')} onPromote={()=>setAdminSetupPrompt(true)}/>;
     return null;
   };
 
@@ -1603,32 +1651,20 @@ const App = () => {
       {renderContent()}
       {showNav&&<BottomNav active={tab} onChange={t=>{setTab(t);setBoardView('list');setSurveyView('list');setConsultView('top');}} unreads={unreads}/>}
       {adminSetupPrompt&&(
-        <div className="modal-overlay" style={{zIndex:100}}>
-          <div className="modal-box">
-            <div className="text-center mb-4">
-              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"><Icon name="user" size={28} color="#1d4ed8"/></div>
-              <h2 className="font-bold text-gray-900 text-base">管理者が設定されていません</h2>
-              <p className="text-sm text-gray-500 mt-1">このアカウントを管理者に設定しますか？</p>
-              <p className="text-xs text-gray-400 mt-1">（ログイン中: {user.email||user.name}）</p>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={()=>setAdminSetupPrompt(false)} className="flex-1 border border-gray-200 rounded-xl py-3 text-sm text-gray-600">あとで</button>
-              <button onClick={()=>{
-                const mems=loadData('union_members',SAMPLE_MEMBERS);
-                const email=user.email||'';
-                const updated=mems.map(m=>m.email===email?{...m,role:'admin'}:m);
-                // メンバーリストに存在しなければ追加
-                const exists=mems.some(m=>m.email===email);
-                const final=exists?updated:[...updated,{id:Date.now(),name:user.name,dept:user.dept||'',email,role:'admin',joinDate:new Date().toISOString().slice(0,10)}];
-                saveData('union_members',final);
-                setUser(u=>({...u,role:'admin'}));
-                setMembers(final);
-                setAdminSetupPrompt(false);
-                showToast('管理者に設定しました');
-              }} className="flex-1 bg-blue-700 text-white rounded-xl py-3 text-sm font-bold">管理者に設定する</button>
-            </div>
-          </div>
-        </div>
+        <AdminPromoteModal
+          user={user}
+          onClose={()=>setAdminSetupPrompt(false)}
+          onPromote={(email)=>{
+            const mems=loadData('union_members',SAMPLE_MEMBERS);
+            const exists=mems.some(m=>m.email===email);
+            const updated=exists?mems.map(m=>m.email===email?{...m,role:'admin'}:m):[...mems,{id:Date.now(),name:user.name,dept:user.dept||'',email,role:'admin',joinDate:new Date().toISOString().slice(0,10)}];
+            saveData('union_members',updated);
+            setMembers(updated);
+            setUser(u=>({...u,role:'admin'}));
+            setAdminSetupPrompt(false);
+            showToast('管理者に設定しました');
+          }}
+        />
       )}
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
     </div>
