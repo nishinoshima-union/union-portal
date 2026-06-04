@@ -172,11 +172,17 @@ const StatusBadge = ({status}) => {
 
 // ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
 const LoginScreen = ({onLogin}) => {
+  const [mode,setMode]=useState('login'); // 'login' | 'register'
   const [email,setEmail]=useState(()=>localStorage.getItem('saved_email')||'');
   const [pw,setPw]=useState(()=>localStorage.getItem('saved_pw')||'');
+  const [pw2,setPw2]=useState('');
+  const [name,setName]=useState('');
+  const [dept,setDept]=useState('');
   const [rememberMe,setRememberMe]=useState(()=>!!localStorage.getItem('saved_email'));
   const [showPw,setShowPw]=useState(false);
   const [err,setErr]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [done,setDone]=useState(false);
 
   const ACCOUNTS=[
     {email:'admin@union.jp',password:'admin123',name:'田中 一郎',dept:'執行部（組合委員長）',role:'admin'},
@@ -184,7 +190,7 @@ const LoginScreen = ({onLogin}) => {
   ];
 
   const handleLogin = async () => {
-    setErr('');
+    setErr('');setLoading(true);
     let fbAuth=null;
     try{ fbAuth=initFb(); }catch(e){ fbAuth=null; }
     if(fbAuth){
@@ -201,17 +207,55 @@ const LoginScreen = ({onLogin}) => {
         else if(code==='auth/invalid-api-key'||code==='auth/invalid-app-argument')setErr('Firebase設定（API Key等）が正しくありません。メニュー→Firebase設定を確認してください');
         else if(code==='auth/network-request-failed')setErr('ネットワークエラーです。接続を確認してください');
         else if(code==='auth/unauthorized-domain')setErr('このドメインはFirebaseに未登録です。FirebaseコンソールのAuthenticationで承認済みドメインに追加してください');
-        else setErr('ログインエラー: '+( code||e?.message||'不明'));
+        else setErr('ログインエラー: '+(code||e?.message||'不明'));
       }
-      return;
+      setLoading(false);return;
     }
-    // Firebase未設定時はデモアカウント
     const found=ACCOUNTS.find(a=>a.email===email&&a.password===pw);
-    if(!found){setErr('メールアドレスまたはパスワードが正しくありません');return;}
+    if(!found){setErr('メールアドレスまたはパスワードが正しくありません');setLoading(false);return;}
     if(rememberMe){localStorage.setItem('saved_email',email);localStorage.setItem('saved_pw',pw);}
     else{localStorage.removeItem('saved_email');localStorage.removeItem('saved_pw');}
+    setLoading(false);
     onLogin(found);
   };
+
+  const handleRegister = async () => {
+    setErr('');
+    if(!name||!dept||!email||!pw)return setErr('すべての項目を入力してください');
+    if(pw!==pw2)return setErr('パスワードが一致しません');
+    if(pw.length<6)return setErr('パスワードは6文字以上にしてください');
+    let fbAuth=null;
+    try{ fbAuth=initFb(); }catch(e){ fbAuth=null; }
+    if(!fbAuth)return setErr('新規登録にはFirebase設定が必要です。管理者にお問い合わせください。');
+    setLoading(true);
+    try{
+      await fbAuth.createUserWithEmailAndPassword(email,pw);
+      const newMember={id:Date.now(),name,dept,email,role:'member',joinDate:new Date().toISOString().slice(0,10)};
+      const mems=loadData('union_members',SAMPLE_MEMBERS);
+      saveData('union_members',[...mems,newMember]);
+      setDone(true);
+      setTimeout(()=>{
+        onLogin({email,name,dept,role:'member'});
+      },1500);
+    }catch(e){
+      const code=e?.code||'';
+      if(code==='auth/email-already-in-use')setErr('このメールアドレスはすでに登録されています');
+      else if(code==='auth/weak-password')setErr('パスワードは6文字以上にしてください');
+      else if(code==='auth/invalid-email')setErr('メールアドレスの形式が正しくありません');
+      else setErr('登録エラー: '+(code||e?.message||'不明'));
+    }
+    setLoading(false);
+  };
+
+  if(done)return(
+    <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-900 flex flex-col items-center justify-center p-6">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><Icon name="check" size={32} color="#16a34a"/></div>
+        <p className="text-lg font-bold text-gray-900 mb-1">登録完了！</p>
+        <p className="text-sm text-gray-500">ログインしています...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-900 flex flex-col items-center justify-center p-6">
@@ -223,27 +267,61 @@ const LoginScreen = ({onLogin}) => {
         <p className="text-blue-200 text-sm mt-1">組合員ポータル</p>
       </div>
       <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-        <h2 className="text-gray-800 font-bold text-lg mb-5">ログイン</h2>
-        {err&&<div className="bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg mb-4">{err}</div>}
-        <div className="mb-4">
-          <label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label>
-          <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" placeholder="example@union.jp" value={email} onChange={e=>setEmail(e.target.value)}/>
+        <div className="flex bg-gray-100 rounded-xl p-1 mb-5">
+          <button onClick={()=>{setMode('login');setErr('');}} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode==='login'?'bg-white text-gray-900 shadow-sm':'text-gray-500'}`}>ログイン</button>
+          <button onClick={()=>{setMode('register');setErr('');}} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode==='register'?'bg-white text-gray-900 shadow-sm':'text-gray-500'}`}>新規登録</button>
         </div>
-        <div className="mb-4">
-          <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード</label>
-          <div className="relative">
-            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} placeholder="パスワードを入力" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
-            <button className="absolute right-3 top-3.5 text-gray-400" onClick={()=>setShowPw(!showPw)}><Icon name={showPw?'eyeoff':'eye'} size={18} color="#9ca3af"/></button>
+        {err&&<div className="bg-red-50 text-red-600 text-xs px-3 py-2 rounded-lg mb-4 leading-relaxed">{err}</div>}
+
+        {mode==='login'&&(<>
+          <div className="mb-4">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label>
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" placeholder="example@union.jp" value={email} onChange={e=>setEmail(e.target.value)}/>
           </div>
-        </div>
-        <label className="flex items-center gap-2 mb-5 cursor-pointer">
-          <input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)} className="w-4 h-4 rounded accent-blue-600"/>
-          <span className="text-sm text-gray-600">ログイン情報を記憶する</span>
-        </label>
-        <button onClick={handleLogin} className="w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm hover:bg-blue-800 active:scale-95 transition-all">ログイン</button>
-        <div className="mt-4 p-3 bg-gray-50 rounded-xl">
-          {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">Firebaseに登録したメール・パスワードでログインしてください</p></>):(<><p className="text-xs text-gray-400 font-bold mb-1">デモアカウント（Firebase未設定時）</p><p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-500">組合員: member@union.jp / member123</p></>)}
-        </div>
+          <div className="mb-4">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード</label>
+            <div className="relative">
+              <input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} placeholder="パスワードを入力" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
+              <button className="absolute right-3 top-3.5 text-gray-400" onClick={()=>setShowPw(!showPw)}><Icon name={showPw?'eyeoff':'eye'} size={18} color="#9ca3af"/></button>
+            </div>
+          </div>
+          <label className="flex items-center gap-2 mb-5 cursor-pointer">
+            <input type="checkbox" checked={rememberMe} onChange={e=>setRememberMe(e.target.checked)} className="w-4 h-4 rounded accent-blue-600"/>
+            <span className="text-sm text-gray-600">ログイン情報を記憶する</span>
+          </label>
+          <button onClick={handleLogin} disabled={loading} className={`w-full bg-blue-700 text-white rounded-xl py-3 font-bold text-sm transition-all ${loading?'opacity-60':'hover:bg-blue-800 active:scale-95'}`}>{loading?'ログイン中...':'ログイン'}</button>
+          <div className="mt-4 p-3 bg-gray-50 rounded-xl">
+            {getFbConfig()?(<><p className="text-xs text-green-600 font-bold mb-1">✓ Firebase認証が有効です</p><p className="text-xs text-gray-500">Firebaseに登録したメール・パスワードでログインしてください</p></>):(<><p className="text-xs text-gray-400 font-bold mb-1">デモアカウント（Firebase未設定時）</p><p className="text-xs text-gray-500">管理者: admin@union.jp / admin123</p><p className="text-xs text-gray-500">組合員: member@union.jp / member123</p></>)}
+          </div>
+        </>)}
+
+        {mode==='register'&&(<>
+          {!getFbConfig()&&<div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4 text-xs text-yellow-700">新規登録にはFirebase設定が必要です。管理者に設定を依頼してください。</div>}
+          <div className="mb-3">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">氏名</label>
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" placeholder="山田 太郎" value={name} onChange={e=>setName(e.target.value)}/>
+          </div>
+          <div className="mb-3">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">所属課</label>
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" placeholder="例：総務課" value={dept} onChange={e=>setDept(e.target.value)}/>
+          </div>
+          <div className="mb-3">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">メールアドレス</label>
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="email" placeholder="example@nishinoshima.lg.jp" value={email} onChange={e=>setEmail(e.target.value)}/>
+          </div>
+          <div className="mb-3">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード（6文字以上）</label>
+            <div className="relative">
+              <input className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm" type={showPw?'text':'password'} placeholder="パスワードを設定" value={pw} onChange={e=>setPw(e.target.value)}/>
+              <button className="absolute right-3 top-3.5" onClick={()=>setShowPw(!showPw)}><Icon name={showPw?'eyeoff':'eye'} size={18} color="#9ca3af"/></button>
+            </div>
+          </div>
+          <div className="mb-5">
+            <label className="text-xs font-bold text-gray-500 mb-1 block">パスワード（確認）</label>
+            <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" type="password" placeholder="もう一度入力" value={pw2} onChange={e=>setPw2(e.target.value)}/>
+          </div>
+          <button onClick={handleRegister} disabled={loading||!getFbConfig()} className={`w-full rounded-xl py-3 font-bold text-sm transition-all ${loading||!getFbConfig()?'bg-gray-200 text-gray-400':'bg-blue-700 text-white hover:bg-blue-800 active:scale-95'}`}>{loading?'登録中...':'登録する'}</button>
+        </>)}
       </div>
     </div>
   );
