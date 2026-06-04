@@ -49,7 +49,7 @@ function saveData(key,data){
 }
 
 // ★ 管理者はここに Firebase 設定を埋め込んでください（設定後HTMLをダウンロードしてGitHub Pagesに上書きアップ）
-const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authDomain":"nishinoshima-town.firebaseapp.com","projectId":"nishinoshima-town","storageBucket":"nishinoshima-town.appspot.com"}; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
+const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authDomain":"nishinoshima-town.firebaseapp.com","projectId":"nishinoshima-town","storageBucket":"nishinoshima-town.firebasestorage.app"}; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
 
 function getFbConfig(){
   if(FIREBASE_CONFIG)return FIREBASE_CONFIG;
@@ -251,7 +251,7 @@ const StatusBadge = ({status}) => {
 };
 
 const Header = ({title,onBack,right}) => (
-  <div className="bg-blue-700 text-white px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+  <div className="bg-blue-700 text-white px-4 md:px-8 py-3 md:py-4 flex items-center gap-3 sticky top-0 z-10">
     {onBack && <button onClick={onBack} className="p-1"><Icon name="back" size={20} color="white"/></button>}
     <h1 className="font-bold text-base flex-1">{title}</h1>
     {right}
@@ -501,12 +501,12 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
   const activeSurveys=surveys.filter(s=>s.status==='active'&&!s.isAnswered);
   return(
     <div className="fade-in pb-24">
-      <div className="bg-blue-700 px-4 pt-10 pb-6">
-        <p className="text-blue-200 text-xs mb-1">ようこそ</p>
-        <h1 className="text-white text-xl font-bold">{(user&&user.name)} さん</h1>
+      <div className="bg-blue-700 px-4 md:px-8 pt-10 md:pt-14 pb-6 md:pb-10">
+        <p className="text-blue-200 text-xs md:text-sm mb-1">ようこそ</p>
+        <h1 className="text-white text-xl md:text-3xl font-bold">{(user&&user.name)} さん</h1>
         <p className="text-blue-200 text-xs mt-1">{(user&&user.dept)}</p>
       </div>
-      <div className="px-4 pt-4">
+      <div className="px-4 md:px-8 pt-4 md:pt-6">
         {unreads.length>0&&(
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center gap-3">
             <span className="badge bg-red-500 text-white flex-shrink-0">{unreads.length}</span>
@@ -527,16 +527,16 @@ const Dashboard = ({posts,surveys,onNav,user}) => {
             <button onClick={()=>onNav('survey')} className="text-xs text-blue-600 font-bold flex-shrink-0">回答 →</button>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
           {[
             {id:'board',icon:'board',label:'掲示板・お知らせ',color:'bg-blue-50',iconColor:'#2563eb'},
             {id:'survey',icon:'survey',label:'アンケート・投票',color:'bg-green-50',iconColor:'#16a34a'},
             {id:'consult',icon:'consult',label:'相談',color:'bg-purple-50',iconColor:'#7c3aed'},
             {id:'kyosai',icon:'kyosai',label:'自治労共済',color:'bg-emerald-50',iconColor:'#059669'},
           ].map(item=>(
-            <button key={item.id} onClick={()=>onNav(item.id)} className={`${item.color} rounded-2xl p-4 text-left card-hover`}>
+            <button key={item.id} onClick={()=>onNav(item.id)} className={`${item.color} rounded-2xl p-4 md:p-6 text-left card-hover`}>
               <Icon name={item.icon} size={28} color={item.iconColor}/>
-              <p className="text-xs font-bold text-gray-700 mt-3 leading-snug">{item.label}</p>
+              <p className="text-xs md:text-sm font-bold text-gray-700 mt-3 leading-snug">{item.label}</p>
             </button>
           ))}
         </div>
@@ -584,9 +584,9 @@ const BoardList = ({posts,onSelect,isAdmin,onNew}) => {
   return(
     <div className="fade-in pb-24">
       <Header title="掲示板・お知らせ" right={isAdmin&&<button onClick={onNew} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>投稿</button>}/>
-      <div className="px-4 pt-4">
-        {pinned.length>0&&<>{pinned.map(renderCard)}<div className="border-t border-gray-200 my-3"/></>}
-        {rest.map(renderCard)}
+      <div className="px-4 md:px-8 pt-4">
+        {pinned.length>0&&<><div className="md:grid md:grid-cols-2 md:gap-3">{pinned.map(renderCard)}</div><div className="border-t border-gray-200 my-3"/></>}
+        <div className="md:grid md:grid-cols-2 md:gap-3">{rest.map(renderCard)}</div>
       </div>
     </div>
   );
@@ -742,8 +742,9 @@ const PostForm = ({onBack,onSubmit}) => {
 const SurveyList = ({surveys,onSelect,isAdmin,onNew}) => (
   <div className="fade-in pb-24">
     <Header title="アンケート・投票" right={isAdmin&&<button onClick={onNew} className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1"><Icon name="plus" size={14} color="white"/>作成</button>}/>
-    <div className="px-4 pt-4">
+    <div className="px-4 md:px-8 pt-4">
       {surveys.length===0&&<p className="text-center text-gray-400 text-sm py-12">アンケートはまだありません</p>}
+      <div className="md:grid md:grid-cols-2 md:gap-4">
       {surveys.map(s=>{
         const qCount=(s.questions||[]).length;
         return(
@@ -770,6 +771,7 @@ const SurveyList = ({surveys,onSelect,isAdmin,onNew}) => (
           </button>
         );
       })}
+      </div>
     </div>
   </div>
 );
@@ -2174,7 +2176,7 @@ const App = () => {
       />
       {/* コンテンツエリア */}
       <div className="md:ml-60">
-        <div className="max-w-[480px] mx-auto md:max-w-2xl min-h-screen bg-gray-50">
+        <div className="max-w-[480px] mx-auto md:max-w-none min-h-screen bg-gray-50">
           {renderContent()}
         </div>
       </div>
