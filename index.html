@@ -44,7 +44,7 @@ function loadData(key,fallback){try{const r=localStorage.getItem(key);return r?J
 function saveData(key,data){localStorage.setItem(key,JSON.stringify(data));}
 
 // ★ 管理者はここに Firebase 設定を埋め込んでください（設定後HTMLをダウンロードしてGitHub Pagesに上書きアップ）
-const FIREBASE_CONFIG=null; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
+const FIREBASE_CONFIG={"apiKey":"AIzaSyBubnqn_m5jAnfoCHlLyckZNfPrMSzbeTs","authDomain":"nishinoshima-town.firebaseapp.com","projectId":"nishinoshima-town"}; // 例: {apiKey:"...",authDomain:"...",projectId:"..."}
 
 function getFbConfig(){
   if(FIREBASE_CONFIG)return FIREBASE_CONFIG;
