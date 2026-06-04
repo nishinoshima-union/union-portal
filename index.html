@@ -263,7 +263,7 @@ const Toast = ({msg,onClose}) => {
   return <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm z-50 shadow-lg">{msg}</div>;
 };
 
-const DesktopSidebar = ({active,onChange,user,unreads,onLogout,onAdminNav,onUnionInfo,onFirebase,onNotif}) => (
+const DesktopSidebar = ({active,subScreen,onChange,user,unreads,onLogout,onAdminNav,onUnionInfo,onFirebase,onNotif}) => (
   <div className="hidden md:flex flex-col w-60 bg-blue-800 min-h-screen fixed left-0 top-0 z-40 shadow-xl">
     <div className="px-5 py-5 border-b border-blue-700">
       <div className="flex items-center gap-3">
@@ -291,7 +291,7 @@ const DesktopSidebar = ({active,onChange,user,unreads,onLogout,onAdminNav,onUnio
         {id:'kyosai',icon:'kyosai',label:'自治労共済'},
       ].map(({id,icon,label})=>{
         const cnt=unreads[id]||0;
-        const isActive=active===id;
+        const isActive=id==='kyosai'?subScreen==='kyosai':active===id&&!subScreen;
         return(
           <button key={id} onClick={()=>onChange(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${isActive?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
             <Icon name={icon} size={18} color="currentColor"/>
@@ -310,16 +310,16 @@ const DesktopSidebar = ({active,onChange,user,unreads,onLogout,onAdminNav,onUnio
         ))}
       </>)}
       <p className="text-blue-400 text-xs font-bold px-2 mt-4 mb-2">組合情報</p>
-      <button onClick={onUnionInfo} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+      <button onClick={onUnionInfo} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${subScreen==='union_info'?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
         <Icon name="board" size={16} color="currentColor"/>
         <span className="text-sm">役員・規約・活動記録</span>
       </button>
       {user.role==='admin'&&(<>
-        <button onClick={onFirebase} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+        <button onClick={onFirebase} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${subScreen==='firebase'?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
           <Icon name="lock" size={16} color="currentColor"/>
           <span className="text-sm">Firebase設定</span>
         </button>
-        <button onClick={onNotif} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left text-blue-200 hover:bg-white/10 hover:text-white">
+        <button onClick={onNotif} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${subScreen==='notif'?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
           <Icon name="bell" size={16} color="currentColor"/>
           <span className="text-sm">メール通知設定</span>
         </button>
@@ -338,7 +338,7 @@ const BottomNav = ({active,onChange,unreads}) => {
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-200 flex z-30">
       {items.map(({id,label})=>{
         const cnt=unreads[id]||0;
-        const isActive=active===id;
+        const isActive=id==='kyosai'?subScreen==='kyosai':active===id&&!subScreen;
         const iconName={home:'home',board:'board',survey:'survey',consult:'consult',menu:'menu'}[id];
         return(
           <button key={id} className="bottom-nav-item" onClick={()=>onChange(id)}>
@@ -1324,6 +1324,7 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
   const [showForm,setShowForm]=useState(false);
   const [draft,setDraft]=useState({title:'',description:'',endAt:'',questions:[emptyQuestion()]});
   const [viewResult,setViewResult]=useState(null);
+  const [resultTab,setResultTab]=useState('summary');
   const addQuestion=()=>setDraft(d=>({...d,questions:[...d.questions,emptyQuestion()]}));
   const removeQuestion=(qid)=>setDraft(d=>({...d,questions:d.questions.filter(q=>q.id!==qid)}));
   const updateQ=(qid,patch)=>setDraft(d=>({...d,questions:d.questions.map(q=>q.id===qid?{...q,...patch}:q)}));
@@ -1369,8 +1370,6 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
     if(!s)return null;
     const qs=s.questions&&s.questions.length>0?s.questions:[{id:'q0',text:s.title,type:s.type||'single',options:s.options||[]}];
     const answers=s.answers||[];
-    const [resultTab,setResultTab]=useState('summary');
-
     // 集計
     const calcSummary=(q)=>{
       if(q.type==='single'||q.type==='multi'){
@@ -2294,7 +2293,7 @@ const App = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* デスクトップサイドバー */}
-      <DesktopSidebar active={tab} onChange={changeTab} user={user} unreads={unreads}
+      <DesktopSidebar active={tab} subScreen={subScreen} onChange={changeTab} user={user} unreads={unreads}
         onLogout={()=>{setUser(null);setTab('home');}}
         onAdminNav={id=>setSubScreen('admin_'+id)}
         onUnionInfo={()=>setSubScreen('union_info')}
