@@ -285,7 +285,7 @@ const DesktopSidebar = ({active,subScreen,onChange,user,unreads,onLogout,onAdmin
         {id:'kyosai',icon:'kyosai',label:'自治労共済'},
       ].map(({id,icon,label})=>{
         const cnt=unreads[id]||0;
-        const isActive=id==='kyosai'?subScreen==='kyosai':active===id&&!subScreen;
+        const isActive=active===id;
         return(
           <button key={id} onClick={()=>onChange(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-colors text-left ${isActive?'bg-white/20 text-white font-bold':'text-blue-200 hover:bg-white/10 hover:text-white'}`}>
             <Icon name={icon} size={18} color="currentColor"/>
@@ -332,7 +332,7 @@ const BottomNav = ({active,onChange,unreads}) => {
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-200 flex z-30">
       {items.map(({id,label})=>{
         const cnt=unreads[id]||0;
-        const isActive=id==='kyosai'?subScreen==='kyosai':active===id&&!subScreen;
+        const isActive=active===id;
         const iconName={home:'home',board:'board',survey:'survey',consult:'consult',menu:'menu'}[id];
         return(
           <button key={id} className="bottom-nav-item" onClick={()=>onChange(id)}>
