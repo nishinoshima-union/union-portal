@@ -1356,8 +1356,7 @@ const AdminSurveys = ({onBack,surveys,setSurveys,showToast}) => {
       });
       return row;
     });
-    const csv=[headers,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('
-');
+    const csv=[headers,...rows].map(r=>r.map(c=>'"'+String(c||'').split('"').join('""')+'"').join(',')).join(String.fromCharCode(10));
     const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
